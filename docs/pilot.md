@@ -71,3 +71,35 @@ serves every outcome model and both statistics.
 
 Many groups, large `N`, heavy-tailed covariates, worst-case outcome directions,
 and closed-form standard errors for shell designs.
+
+## Results (400 datasets per cell, 200 reference draws)
+
+Reproduce with `uv run python scripts/pilot.py` then `scripts/headline.py`.
+Power is at `tau = 1.96 sqrt(8/N)`. ESS is the MSE of CRD analysed by OLS
+divided by the MSE of the design analysed by OLS; with 400 datasets it carries
+roughly ±0.1 to 0.15 of simulation noise.
+
+```text
+                  CRD+OLS  rerand RI-OLS  ESS rerand  exchange RI-OLS  ESS exchange  shell RI-OLS  ESS shell  FSM RI-OLS  ESS FSM
+N   p  dgp                                                                                                                       
+20  1  linear        0.77           0.68        0.91             0.75          0.82          0.70       0.85        0.36     0.94
+    5  linear        0.60           0.60        1.52             0.69          1.33          0.70       1.48        0.07     1.36
+       nonlinear     0.43           0.45        1.44             0.49          1.39          0.53       1.56        0.06     1.42
+50  1  linear        0.73           0.77        1.15             0.76          1.17          0.73       1.04        0.62     1.10
+    5  linear        0.72           0.79        1.15             0.76          1.18          0.75       1.13        0.40     1.13
+       nonlinear     0.57           0.57        1.00             0.58          0.93          0.60       1.02        0.40     1.43
+    20 linear        0.57           0.71        1.60             0.74          1.79          0.68       1.66        0.22     1.13
+       nonlinear     0.38           0.52        1.65             0.51          1.74          0.54       1.77        0.16     1.37
+100 1  linear        0.81           0.73        0.91             0.75          0.91          0.80       0.83        0.76     0.95
+    5  linear        0.74           0.80        1.17             0.78          1.23          0.81       1.12        0.62     1.05
+       nonlinear     0.60           0.62        1.01             0.62          0.97          0.63       1.05        0.63     1.63
+    20 linear        0.71           0.74        1.09             0.79          1.32          0.79       1.36        0.31     1.15
+       nonlinear     0.50           0.57        1.01             0.57          1.29          0.58       1.16        0.26     1.28
+300 1  linear        0.77           0.77        1.08             0.80          1.22          0.81       1.17        0.77     1.03
+    5  linear        0.77           0.79        1.05             0.81          1.13          0.80       1.08        0.78     1.09
+       nonlinear     0.60           0.62        1.03             0.56          1.03          0.60       1.02        0.77     1.62
+    20 linear        0.78           0.79        0.90             0.78          0.98          0.76       0.92        0.46     1.07
+       nonlinear     0.57           0.55        1.08             0.62          1.28          0.60       1.15        0.45     1.36
+
+RI size across all cells: 0.005 to 0.075
+```
