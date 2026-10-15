@@ -1,6 +1,6 @@
 # Theory: what balance buys over regression adjustment
 
-The pilot's numbers follow from five short results. Each is stated for two
+The pilot's numbers follow from five short results, and a sixth gives a design with an explicit dial. Each is stated for two
 equal arms; `scripts/theory_check.py` sets the predictions beside the
 simulations.
 
@@ -112,18 +112,44 @@ any design that balances the squares and cross-products explicitly.
 
 ## 5. Inference
 
-**Proposition 4 (the t-test under balance).** Let `kappa^2` be the share of the
-complete-randomization variance of `tau_hat` that the design leaves:
-`kappa^2 = (sigma^2 + V_unbalanced) / (sigma^2 + V_total)`. The pooled t-test
-estimates the complete-randomization variance whatever the design, so its
-statistic is shrunk by `kappa`. Its size is `2 Phi_bar(1.96 / kappa)` instead
-of 0.05, and its power at an effect of `1.96` of its own standard errors stays
-at about one half. A randomization test that redraws the actual design
-measures the true variance, so its power is
-`Phi_bar(1.96 - 1.96 / kappa)`.
+**Proposition 4 (the t-test under balance).** This holds under a constant
+treatment effect, with a Gaussian approximation to the sampling distribution of
+`tau_hat`.
 
-With half the outcome variance balanced away (`kappa = 0.71`), this gives a
-t-test size of 0.006, t-test power 0.50 and randomization-test power 0.79.
+The pooled (or Neyman) variance estimator targets
+`S_1^2 / n_1 + S_0^2 / n_0`, built from the within-arm variances. Two facts
+qualify what that is.
+
+- Under complete randomization it exceeds the true variance by `S_tau^2 / N`,
+  where `S_tau^2` is the variance of the unit-level effects. It is exact only
+  when effects are constant, and otherwise conservative.
+- Balancing covariates barely changes the within-arm variances, so under a
+  balanced design the estimator still targets roughly that quantity. The true
+  variance, though, has lost the balanced part.
+
+Let `kappa^2 = (sigma^2 + V_unbalanced) / (sigma^2 + V_total)`. Under a
+constant effect, the t statistic is shrunk by `kappa`. If `tau_hat` is
+approximately Gaussian, its size is `2 Phi_bar(1.96 / kappa)` instead of 0.05.
+Its power at an effect of `1.96` of its own standard errors stays at about one
+half. A randomization test that redraws the actual design uses the true
+randomization distribution, so its power is about `Phi_bar(1.96 - 1.96 / kappa)`.
+With half the outcome variance balanced away (`kappa = 0.71`), these give a
+t-test size of 0.006, t-test power of 0.50 and randomization-test power of 0.79.
+
+Two qualifications apply.
+
+- *Heterogeneous effects* make the variance estimator more conservative still,
+  under every design (Branson, Li and Ding 2024).
+- *The Gaussian approximation is design-specific.* Under thresholded
+  rerandomization the limiting distribution of `tau_hat` is not normal. It is a
+  normal plus a truncated component, and it is more concentrated than a normal
+  of the same variance (Li, Ding and Rubin 2018; Branson, Li and Ding 2024). The
+  size formula is then an approximation in the conservative direction rather
+  than an equality. Under near-exact balance (`Q` close to 0) the truncated
+  component vanishes, and only the Gaussian limit of the residual part remains.
+
+The randomization test needs none of this. Its size is exact in finite samples
+for the sharp null, whatever the outcome distribution.
 
 **Proposition 5 (resolution of a randomization test).** Under the sharp null
 the difference in means satisfies `S(-w) = -S(w)`. So the exact two-sided
@@ -134,6 +160,55 @@ likely partitions (40 assignments). A deterministic design such as plain ABA
 has one partition and can never reject. The FSM at `N = 100` with 20
 covariates produced 24 distinct partitions in 2,000 draws, which is why its
 randomization tests had little power.
+
+## 6. Grouped randomization: a dial between ABA and complete randomization
+
+**Design `G(K)`.**
+
+1. Partition the `N` units into `K` groups of `m = N / K` with anticlustering
+   on the covariates (and on any features to be balanced, per Proposition 3).
+2. Assign `K / 2` groups to treatment by complete randomization over groups.
+
+The partition depends on `X` alone, so inference can condition on it.
+
+**Proposition 6.** Let `G` be the `N x K` group-membership matrix. Then:
+
+1. *Unbiasedness.* Every unit has probability 1/2 of treatment, so `tau_hat` is
+   unbiased under arbitrary effects.
+2. *Spread.* `Sigma = (K / (K - 1)) G (I - 11'/K) G'`. Its nonzero eigenvalues
+   all equal `N / (K - 1)`, on the `K - 1` group contrasts, and it is zero on
+   within-group directions. The worst-case variance factor for unmeasured
+   components is exactly `(N - 1) / (K - 1)` relative to complete
+   randomization; the average over directions matches it.
+3. *Resolution.* There are `C(K, K/2) / 2` equally likely partitions, so the
+   randomization p-value can go down to `2 / C(K, K/2)`. That is 0.029 at
+   `K = 8`, 0.008 at `K = 10` and about 1e-5 at `K = 20`. Rejection at 5%
+   needs `K >= 8`.
+4. *Balance.* The treated mean minus the overall mean is the average of `K/2`
+   group deviations. Anticlustering makes each deviation small, so `Q` is
+   small. It grows as `K` approaches `N`, because the groups shrink.
+5. *Standard errors.* This is a cluster-randomized experiment with `K` equal
+   clusters. The Neyman estimator on group means applies and is conservative,
+   with `K - 2` degrees of freedom for a t reference. This gives a closed-form
+   variance the shell draft lacks.
+
+*Proof of 2.* `W = G s`, where `s` is a complete randomization of `K` labels
+with `E[s s'] = (K / (K - 1)) (I - 11'/K)`. The matrix `G (I - 11'/K) G'` has
+eigenvalue `m` on the group contrasts.
+
+`K` is the dial. `K = 2` is ABA itself: one partition, a worst case of
+`N - 1`, and no test. `K = N` is complete randomization. Choosing `K` sets
+three things explicitly:
+
+- the worst case, `(N - 1) / (K - 1)`;
+- the resolution, `C(K, K/2)`;
+- the balance, through the group size `m`.
+
+The worst case is real only for unmeasured components that line up with the
+grouping. The grouping is a function of `X`, so the danger lies in functions of
+`X` that the anticlustering did not balance. Plain ABA on means makes second
+moments worse than random, which is why the partition should balance the
+squares and cross-products too.
 
 ## Predictions against the pilot
 
@@ -185,6 +260,10 @@ anticlustering, `p = 5` (Proposition 4):
    symmetry for unbiasedness, at least `2 / alpha` partitions for the test to
    reject, and a bounded largest eigenvalue for robustness to what was not
    measured.
-4. The classical t-test is the wrong analysis for any balanced design. A
-   randomization test that redraws the design recovers the lost power at
-   exact size.
+4. The classical t-test is conservative under any balanced design (and, with
+   heterogeneous effects, under complete randomization too). A randomization
+   test that redraws the design recovers the lost power at exact size for the
+   sharp null.
+5. Grouped randomization `G(K)` turns the balance-robustness trade-off into
+   one integer, with a closed-form worst case, test resolution and cluster
+   standard errors.
