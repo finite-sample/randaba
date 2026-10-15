@@ -179,7 +179,8 @@ The partition depends on `X` alone, so inference can condition on it.
    all equal `N / (K - 1)`, on the `K - 1` group contrasts, and it is zero on
    within-group directions. The worst-case variance factor for unmeasured
    components is exactly `(N - 1) / (K - 1)` relative to complete
-   randomization; the average over directions matches it.
+   randomization. Averaged over all directions it equals complete
+   randomization, because the trace is still `N`.
 3. *Resolution.* There are `C(K, K/2) / 2` equally likely partitions, so the
    randomization p-value can go down to `2 / C(K, K/2)`. That is 0.029 at
    `K = 8`, 0.008 at `K = 10` and about 1e-5 at `K = 20`. Rejection at 5%
