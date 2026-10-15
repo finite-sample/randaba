@@ -13,4 +13,4 @@ that version.
 
 - Initial package scaffolding.
 
-[Unreleased]: https://github.com/finite-sample/fsm-scale/commits/main
+[Unreleased]: https://github.com/finite-sample/shelldraft/commits/main

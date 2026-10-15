@@ -1,6 +1,6 @@
-# fsm-scale
+# shelldraft
 
-Finite Selection Model allocation at scale: many units, many groups
+Randomized balanced assignment by jittered shell anticlustering, with exact randomization inference
 
 ```{toctree}
 :maxdepth: 2

@@ -1,6 +1,6 @@
 [project]
-name = "fsm-scale"
-description = "Finite Selection Model allocation at scale: many units, many groups"
+name = "shelldraft"
+description = "Randomized balanced assignment by jittered shell anticlustering, with exact randomization inference"
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
@@ -11,19 +11,25 @@ classifiers = [
     "Intended Audience :: Developers",
     "Programming Language :: Python :: 3",
 ]
-dependencies = []
+dependencies = [
+    "numpy>=2.0",
+    "scipy>=1.13",
+]
 
 [project.urls]
-Homepage = "https://github.com/finite-sample/fsm-scale"
-Documentation = "https://finite-sample.github.io/fsm-scale/"
-Repository = "https://github.com/finite-sample/fsm-scale"
+Homepage = "https://github.com/finite-sample/shelldraft"
+Documentation = "https://finite-sample.github.io/shelldraft/"
+Repository = "https://github.com/finite-sample/shelldraft"
 
 [build-system]
 requires = ["uv_build>=0.12.5,<0.13"]
 build-backend = "uv_build"
 
 [tool.uv.build-backend]
-module-name = "fsm_scale"
+module-name = "shelldraft"
+
+[tool.uv.sources]
+finite-selection = { git = "https://github.com/finite-sample/finite-selection" }
 
 [dependency-groups]
 dev = [
@@ -39,6 +45,13 @@ docs = [
     "furo",
     "myst-parser",
     "sphinx-copybutton",
+]
+sims = [
+    "finite-selection",
+    "joblib>=1.4",
+    "matplotlib>=3.9",
+    "pandas>=2.2",
+    "pyarrow>=17",
 ]
 
 [tool.ruff]
@@ -64,6 +77,8 @@ convention = "google"
 # Unused fixture arguments and private-member access are how tests are written.
 "tests/**" = ["S101", "D", "ARG", "SLF"]
 "docs/**" = ["D"]
+# Scripts report results on stdout.
+"scripts/**" = ["T201"]
 
 [tool.pyright]
 include = ["src"]
@@ -90,3 +105,7 @@ addopts = ["-ra", "--strict-config", "--strict-markers"]
 source = ["src"]
 
 [tool.preen]
+
+[tool.codespell]
+# som: selection order matrix, the FSM package's function name.
+ignore-words-list = "som"

@@ -1,6 +1,6 @@
 # API
 
 ```{eval-rst}
-.. automodule:: fsm_scale
+.. automodule:: shelldraft
    :members:
 ```

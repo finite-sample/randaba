@@ -1,7 +1,7 @@
 """Basic package tests."""
 
-import fsm_scale
+import shelldraft
 
 
 def test_version() -> None:
-    assert fsm_scale.__version__
+    assert shelldraft.__version__
