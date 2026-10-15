@@ -55,6 +55,9 @@ def crd(n: int, k: int, rng: np.random.Generator) -> np.ndarray:
 
     Returns:
         Group labels.
+
+    Raises:
+        ValueError: If ``n`` is not a multiple of ``k`` or ``k < 2``.
     """
     if k < 2 or n % k:
         raise ValueError("n must be a multiple of k >= 2")
