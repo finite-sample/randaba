@@ -5,5 +5,7 @@ Randomized balanced assignment by jittered shell anticlustering, with exact rand
 ```{toctree}
 :maxdepth: 2
 
+theory
+pilot
 api
 ```
