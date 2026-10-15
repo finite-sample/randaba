@@ -141,15 +141,30 @@ Two qualifications apply.
 - *Heterogeneous effects* make the variance estimator more conservative still,
   under every design (Branson, Li and Ding 2024).
 - *The Gaussian approximation is design-specific.* Under thresholded
-  rerandomization the limiting distribution of `tau_hat` is not normal. It is a
-  normal plus a truncated component, and it is more concentrated than a normal
-  of the same variance (Li, Ding and Rubin 2018; Branson, Li and Ding 2024). The
-  size formula is then an approximation in the conservative direction rather
-  than an equality. Under near-exact balance (`Q` close to 0) the truncated
-  component vanishes, and only the Gaussian limit of the residual part remains.
+  rerandomization the limit of `N^{1/2}(tau_hat - tau)` is
+  `V^{1/2} {(1 - R^2)^{1/2} e_0 + R L_{K,a}}`: a normal plus a truncated
+  component (Li, Ding and Rubin 2018). That limit is less dispersed than the
+  complete-randomization normal `V^{1/2} e_0` in every quantile gap
+  (Branson, Li and Ding 2024, Theorem 3). Under near-exact balance (`Q` close
+  to 0) the truncated part vanishes, and the limit is the normal of the
+  residual part.
+- *For rerandomization, the fix already exists analytically.* Li, Ding and
+  Rubin (2018) replace `z_{1-alpha/2}` with the quantile of that mixture at an
+  estimated `R^2`. Branson, Li and Ding (2024) derive power and sample size
+  for this test.
+  - They show that the Neyman estimator overestimates the variance by the
+    same `S_tau^2` under both designs, so it is proportionally more
+    conservative under rerandomization.
+  - With heterogeneity and small effects, that can make rerandomization less
+    powerful than complete randomization (their Theorems 4 and 5).
+  - The less conservative estimator `V_N - s^2_{tau|X}` (Ding, Feller and
+    Miratrix 2019) narrows the gap.
 
-The randomization test needs none of this. Its size is exact in finite samples
-for the sharp null, whatever the outcome distribution.
+  No analytic analogue exists for anticlustering designs (Papenberg and
+  Angelike 2026), the shell draft or the FSM. There, a randomization test that
+  redraws the design is the available exact option. Its size is exact in finite
+  samples for the sharp null, whatever the outcome distribution. For the weak
+  null of zero average effect, it inherits the same heterogeneity issues.
 
 **Proposition 5 (resolution of a randomization test).** Under the sharp null
 the difference in means satisfies `S(-w) = -S(w)`. So the exact two-sided
