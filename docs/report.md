@@ -69,6 +69,18 @@ An ablation on 20,000 units, 8 covariates and 200 groups:
 | ABA given squares and cross-products as features | 0.013 | 0.08 | 1.0 |
 | FSM distance in shells, random turn order | 0.035 | 0.19 | 0.005 |
 
+The **shell draft** is ABA made random:
+
+1. Whiten the covariates.
+2. Sort units by distance from the centre times $e^{\sigma Z}$, with $Z$
+   standard normal (the jitter).
+3. Cut the sorted list into shells of $K$.
+4. Deal each shell by ABA's matching.
+5. Shuffle the group labels at the end.
+
+The pilot used $\sigma = 1$ and centroid distance. Its code is
+`shelldraft.designs.shell_draft`.
+
 Three lessons:
 
 1. **Randomness is nearly free if it goes in the right place.** Jittering the
