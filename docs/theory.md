@@ -112,8 +112,13 @@ The expectation is infinite when `N <= p + 3`.
 covariates, so `4 sigma^2 / N` is an ideal that real designs approach. The
 comparison is with unregularized OLS on all `p` covariates. It says nothing
 about shrinkage, prediction-based adjustment or external prognostic scores.
-To first order, rerandomization brings no gain once the analysis uses an
-optimal regression (Li and Ding 2020). Proposition 2 describes the smaller
+Kallus (2018, Corollary 3 and Section 2.4.4) shows the other side: an optimally
+balancing design's variance relative to complete randomization is at least
+`1 - R^2` and approaches it, with no finite-sample bias, as the minimal
+imbalance shrinks. Proposition 2 adds what unregularized OLS under complete
+randomization pays for reaching the same `1 - R^2`. To first order,
+rerandomization brings no gain once the analysis uses an optimal regression
+(Li and Ding 2020). Proposition 2 describes the smaller
 finite-sample term that this first-order result leaves out. It matters when
 `p / N` is not small (Lei and Ding 2021 study adjustment in that regime). With
 one covariate, the case Papenberg and Angelike simulate, Corollary 2b gives
@@ -145,9 +150,14 @@ a bound.
 The FSM's D-optimal criterion pushes each group's `X_g' X_g` towards half of
 `X' X`. That suggests it balances squares and cross-products, but no theorem
 here shows it. Whether it does is measured, not proved. Balancing a feature map
-`Phi` that contains the squares and cross-products does it explicitly
-(Papenberg 2024's k-plus criterion). It is feasible only while the number of
-features is well below `N`: with `p = 20` there are 230.
+`Phi` that contains the squares and cross-products does it explicitly. That is
+the design of Bertsimas et al. (2015), as Kallus (2018, Section 2.3.4)
+describes it, and Kallus's quadratic-kernel
+allocation. The k-plus criterion (Papenberg 2024) appends each covariate's
+squared (and higher) deviations from its mean, so it balances marginal
+variances but not covariances. Balancing `Phi` is feasible only while its
+dimension is well below `N`: with `p = 20` there are 230 squares and
+cross-products.
 
 ## 5. Inference
 
@@ -208,7 +218,9 @@ the observed partition.
 
 - For a design uniform over `M` partitions the smallest p-value is at least
   `1 / M`, so rejection at 5% needs at least 20 partitions (40 assignments).
-  Ties at the extreme can prevent rejection even then.
+  Ties at the extreme can prevent rejection even then. This is the constraint
+  behind Kallus's (2020) inference-constrained design: no assignment gets more
+  than `alpha / 2` probability.
 - A non-uniform design can reject on a rare partition with fewer partitions
   in all.
 - A deterministic design such as plain ABA, label shuffle or not, has one
@@ -232,9 +244,24 @@ Once the partition is fixed, step 2 is ordinary equal-size cluster
 randomization. What is new is constructing clusters that are diverse within and
 alike between before randomizing them. Cluster rerandomization (Lu, Liu, Liu
 and Ding 2023) instead takes clusters as given and restricts which assignments
-are allowed. `G(K)` is one simple instance of the randomized designs Kallus
-(2020) studies, where randomization is constrained to keep Fisher's test
-usable.
+are allowed.
+
+In Kallus's (2018, 2020) framework, an outcome class given by a kernel matrix
+`K_ker` gives a design the worst-case risk `lambda_max(K_ker^{1/2} Sigma K_ker^{1/2})`.
+His minimax design over all `Sigma`, constrained so that no assignment exceeds
+`alpha / 2`, is solved heuristically:
+
+1. Find the top `T` balanced partitions by repeated mixed-integer quadratic
+   programs.
+2. Weight those partitions with an `N x N` semidefinite program.
+
+`G(K)` is a member of the same constrained class, with three differences:
+
+- Its `Sigma` is closed form.
+- Every assignment has probability `1 / C(K, K/2)`.
+- Its partition comes from a scalable anticlustering heuristic.
+
+How close its risk comes to the constrained optimum is open.
 
 **Proposition 6.** Let `G` be the `N x K` membership matrix, `s` the `K`-vector
 of group labels and `W = G s`.

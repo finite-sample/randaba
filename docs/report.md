@@ -48,12 +48,23 @@ randomization.
 | Anticlustering for assignment (Papenberg and Angelike 2026) | best of the methods they compared | a random start and one exchange pass | t-test and OLS; a matching randomization test left to future work |
 | Assignment-based anticlustering, ABA (Baumann et al. 2026) | near-perfect on means; scales to millions | none (deterministic) | not designed for it |
 
-The closest work is Kallus (2020). He shows that a single partition can be
-`N - 1` times worse than complete randomization in the worst case, and he
-constrains randomized designs so that Fisher's test stays usable. `G(K)` is a
-simple member of that class with closed-form properties. The specific
-construction, many anticlusters randomized whole, was not found in the
-literature searched, which does not establish that it is new.
+The closest work is Kallus's.
+
+- **Kallus (2018)** treats a design as a game against an adversarial outcome
+  function from a stated class. Without structure, complete randomization is
+  minimax and a single partition can be `N - 1` times worse. Under a correctly
+  specified parametric class, optimal balancing reaches the regression-adjusted
+  variance `1 - R^2` without bias. Its pure-strategy designs (a single best
+  partition) cannot be tested by randomization, so he proposes a bootstrap
+  test.
+- **Kallus (2020)** constrains the minimax design so that no assignment exceeds
+  probability `alpha / 2`, which keeps Fisher's test usable. He computes it with
+  repeated mixed-integer programs and an `N x N` semidefinite program.
+
+`G(K)` sits in the same constrained class. Its covariance is closed form and it
+needs no solver, but how close it comes to the constrained optimum is
+unknown. The specific construction, many anticlusters randomized whole, was not
+found in the literature searched, which does not establish that it is new.
 
 ## 3. How anticlustering balances, and how to randomize it
 
@@ -98,9 +109,13 @@ What the ablation shows, and what it does not:
 2. **Shuffling labels at the end is mandatory.** Without it, jitter left some
    units in group 0 in 83% of draws. The pairs check could not see this,
    because it ignores labels.
-3. **Balancing means can unbalance spread**, as Papenberg (2024) found. His
-   k-plus criterion adds higher moments as features. That works while the
-   feature count stays well below `N`.
+3. **Balancing means can unbalance spread.** Two fixes exist. The k-plus
+   criterion (Papenberg 2024) appends each covariate's squared and higher
+   deviations, which balances marginal variances but not covariances.
+   Balancing squares and cross-products together is, as Kallus (2018) describes
+   it, the design of Bertsimas
+   et al. (2015) and Kallus's (2018) quadratic-kernel allocation. Either works
+   only while the feature count stays well below `N`.
 
 ## 4. Theory
 
@@ -121,7 +136,11 @@ the `+/-1` assignment vector; `Sigma = E[WW']`.
    `(N-3)/(N-p-3)` with Gaussian covariates. That gain is 6% with one
    covariate at `N = 20`, consistent with Papenberg and Angelike's null. It is
    a finite-sample term beneath Li and Ding's first-order result, and it
-   matters when `p/N` is not small.
+   matters when `p/N` is not small. Papenberg and Angelike's own noise
+   condition is consistent with it. With five irrelevant covariates added to
+   the regression, adjusted power was 0.720 after anticlustering against 0.706
+   after random assignment, compared with 0.722 and 0.719 with the one
+   covariate alone.
 4. **Omitted components.** If the design balances an outcome component that
    the regression omits, the gain grows by about `1 + V_g/sigma^2`. If it
    balances only the means, that component can get worse, not better.
