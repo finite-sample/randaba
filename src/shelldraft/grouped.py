@@ -124,6 +124,75 @@ def expected_imbalance(x: np.ndarray, groups: np.ndarray) -> float:
     return float(k * m**2 / (k - 1) * np.trace(b))
 
 
+def local_optimum_bound(x: np.ndarray, groups: np.ndarray) -> float:
+    """Upper bound on ``E[Q]`` that holds at any local optimum of the exchange.
+
+    At a local optimum no swap of ``i`` in group ``g`` with ``j`` in group ``h``
+    helps. With ``delta = x_j - x_i`` at angle ``theta`` to ``d_h - d_g`` (``d``
+    the whitened group-mean deviations) this forces
+    ``|d_g - d_h| <= |delta| / (m cos theta)``. Such a pair with
+    ``cos theta > 0`` always exists, because the average of the differences is
+    ``d_h - d_g`` itself. With ``rho_gh`` the smallest ``|delta| / cos theta``,
+    summing over pairs of groups gives
+    ``E[Q] <= sum_{g<h} rho_gh^2 / ((K - 1)(N - 1))``.
+
+    Args:
+        x: Covariates, one row per unit.
+        groups: Group labels from a local optimum of the exchange method on the
+            whitened covariates (``partition``).
+
+    Returns:
+        The bound.
+    """
+    w = whiten(x)
+    k = int(groups.max()) + 1
+    n = len(w)
+    members = [w[groups == g] for g in range(k)]
+    means = np.array([mem.mean(axis=0) for mem in members])
+    total = 0.0
+    for g in range(k - 1):
+        for h in range(g + 1, k):
+            target = means[h] - means[g]
+            size = np.linalg.norm(target)
+            if size == 0:
+                continue
+            diffs = (members[h][None, :, :] - members[g][:, None, :]).reshape(
+                -1, len(target)
+            )
+            norms = np.linalg.norm(diffs, axis=1)
+            cos = diffs @ target / (norms * size)
+            ok = cos > 0
+            total += (norms[ok] / cos[ok]).min() ** 2
+    return float(total / ((k - 1) * (n - 1)))
+
+
+def relative_mse(g: np.ndarray, groups: np.ndarray) -> float:
+    """MSE from an omitted outcome component under G(K), relative to CRD.
+
+    For a component ``g`` of ``mu`` that the analysis does not model, the
+    difference in means picks up ``(2/N) W'g``. Its mean square is ``g' Sigma g``
+    up to ``4/N^2``. The ratio to complete randomization is
+    ``((N - 1)/N) m s_b^2 / V_g``, with ``s_b^2`` the variance of the group
+    means of ``g`` (divisor ``K - 1``) and ``V_g`` its variance (divisor ``N``).
+    A random partition gives about 1; a ``g`` constant within groups gives the
+    worst case ``(N - 1)/(K - 1)``. For the OLS estimator under exact balance,
+    pass ``g`` residualized on the covariates.
+
+    Args:
+        g: The omitted component, one value per unit.
+        groups: Group labels.
+
+    Returns:
+        ``g' Sigma_G g / g' Sigma_CRD g``.
+    """
+    g = np.asarray(g, dtype=float)
+    n = len(g)
+    centred = g - g.mean()
+    num = centred @ covariance(groups) @ centred
+    den = n / (n - 1) * centred @ centred
+    return float(num / den)
+
+
 def ols_error_eigenvalues(
     x: np.ndarray,
     groups: np.ndarray,

@@ -1,46 +1,62 @@
-# Anticlustering for experimental assignment: balance, robustness and valid inference
+# Balancing at assignment: what it buys over regression and what it costs
 
-**Finding.** Anticlustering (splitting units into groups that look alike on
-covariates) can build the assignment of a randomized experiment. How well that
-works depends on the whole distribution of assignments the procedure can
-produce, not on the balance of the draw you get. Three properties of that
-distribution decide it:
+## Abstract
 
-- **Unbiasedness**, from label symmetry.
-- **Robustness**, the largest eigenvalue of the assignment covariance, which
-  bounds how badly an unmeasured outcome component can be hit.
-- **Testability**, the probability mass on the observed partition, which
-  bounds the smallest randomization p-value.
+Experimenters increasingly assign treatment with algorithms that make the arms
+look alike on baseline covariates, such as rerandomization, matching and
+anticlustering, and then analyse the data with regression. Simulation studies
+find that regression recovers most of what such balancing buys. That leaves
+practitioners with three unanswered questions: when balancing still pays, what
+it costs in protection against unmeasured covariates, and how to keep inference
+exact. We answer them for two-arm experiments analysed by ordinary least
+squares (OLS).
 
-This framing is not new: it is Kallus's (2018, 2020) and that of Krieger,
-Kapelner and Azriel (2019, 2021). What may be new is grouped randomization `G(K)`. It
-anticlusters into `K` groups, then randomizes whole groups to arms, and it
-makes all three properties explicit:
+- **What balance buys.** Exact balance beats complete randomization with OLS by
+  a factor of at least `(N-1)/(N-1-p)`, and exactly `(N-3)/(N-p-3)` with
+  Gaussian covariates. That is under 5% with a handful of covariates, which
+  explains the published nulls, but 20 to 35% when there are 17 to 25
+  covariates per 100 units.
+- **What it costs.** The cost of balance lives in the distribution of possible
+  assignments, not in any one of them. We make it explicit through grouped
+  randomization, which anticlusters units into `K` groups and randomizes whole
+  groups.
+  - Every quantity has a closed form.
+  - The MSE over unmeasured covariates has only `K - 1` degrees of freedom.
+  - Any local optimum of the anticlustering carries a checkable bound on its
+    remaining imbalance.
+- **A hazard.** Small groups balanced on means alone make omitted squares and
+  interactions up to 76% worse than complete randomization.
+- **What works.** In a comparison at 17 to 25 covariates per 100 units, local
+  search from many random starts (greedy pair-switching) reaches the
+  exact-balance optimum on average. It also has the lightest tail of any
+  design compared, and supports an exact randomization test. Matching or
+  balancing squares as well guards against omitted nonlinearity.
 
-- the worst case `(N-1)/(K-1)`;
-- the Frobenius randomness term `N^2/(K-1)` of Kapelner et al.'s tail
-  criterion;
-- the test resolution `2/C(K, K/2)`.
+The practical rule follows. With few covariates per unit, randomize and adjust.
+With many, balance by local search from random starts, test by redrawing the
+design, and balance the nonlinear terms the outcome may carry.
 
-Holding the worst case to a factor `C` of complete randomization requires
-`K >= 1 + (N-1)/C`, so groups must be small. Two results settle how `G(K)`
-behaves (section 4, items 7 and 8).
+## Summary of results
 
-- **Small groups still balance well, more slowly with many covariates.**
-  Exchange anticlustering leaves expected imbalance `E[Q]` of about
-  `m^{-(1+2/p)} N^{-2/p}` for groups of `m`. A random split leaves about `p`.
-  This is derived heuristically and checked by simulation.
-- **The tail is where `G(K)` pays.** Kapelner et al. judge a design by a high
-  quantile of its MSE over unobserved covariates. Under that criterion,
-  `G(K)` with OLS has `K - 1` degrees of freedom, against `N - p - 1` for
-  complete randomization with OLS.
-  - It wins on the mean for every `K`.
-  - It wins at the 95% quantile only with many small groups and a large `p/N`.
-    At `N = 120` with 20 covariates that means groups of 2 or 3. With 5
-    covariates it never wins.
+| Question | Answer | Where |
+|---|---|---|
+| When does design-time balance beat OLS? | When `p/N` is not small: gain `(N-3)/(N-p-3)` | Theory, Prop. 2 |
+| What does it cost? | `lambda_max`, `‖Sigma‖_F^2` and the mass on one partition. For `G(K)` these are `(N-1)/(K-1)`, `N^2/(K-1)` and `2/C(K,K/2)` | Props. 1, 5, 6 |
+| How well do small groups balance? | A certificate at any local optimum; typical rate `m^{-(1+2/p)} N^{-2/p}` | Prop. 7 |
+| How does coarse randomization show up in the tail? | The MSE over unmeasured covariates has `K - 1` degrees of freedom | Prop. 8 |
+| What happens to omitted nonlinear terms? | Mean-only small groups make them worse; balancing them reverses it | Prop. 9 |
+| Which design to use? | Local search from random starts; add moment balancing or matching for nonlinear outcomes | Section 5 |
 
-So `G(K)` is not a general replacement for complete randomization with
-regression. It is a design for the many-covariate regime, with tiny groups.
+Much of the framing is prior work: Kallus (2018, 2020), Krieger, Azriel and
+Kapelner (2019), Kapelner et al. (2021), Li, Ding and Rubin (2018), and
+Bertsimas, Johnson and Kallus (2015). Section 2 lists what each established.
+What this report adds:
+
+- the exact finite-sample accounting against OLS;
+- the closed-form grouped family with its degrees-of-freedom result;
+- the local-optimum certificate and rate;
+- the omitted-structure identity;
+- a comparison that puts these on one scale.
 
 ## 1. The question
 
@@ -212,12 +228,18 @@ the `+/-1` assignment vector; `Sigma = E[WW']`.
      `t_{K-2}` reference is only an approximation: with `K = 8`, one null
      configuration rejects 14% of the time at a nominal 5%. Lu et al.'s
      simulations suggest normal-based intervals need a few dozen groups.
-7. **Balance against group size** (heuristic, checked). Exchange
-   anticlustering to a local optimum gives
-   `E[Q] ~ c_p m^{-(1+2/p)} N^{-2/p}`. This extends Krieger et al.'s
-   two-group rate, since a group can swap with every unit outside it. Over
-   `N` from 240 to 960 and `p` from 1 to 10, the fitted exponents were within
-   0.05 of the prediction for `m` and within 0.12 for `N`.
+7. **Balance against group size.**
+   - *A certificate (proved).* At any local optimum of the exchange method,
+     `|d_g - d_h| <= rho_gh/m`. Here `rho_gh` is the smallest
+     `|x_j - x_i|/cos theta` over cross-group pairs, and `theta` is the angle
+     to the gap between the two group means. So
+     `E[Q] <= sum_{g<h} rho_gh^2/((K-1)(N-1))`. This can be reported with any
+     partition, and it held in all 400 simulated partitions.
+   - *A rate (heuristic, checked).* Typically
+     `E[Q] ~ c_p m^{-(1+2/p)} N^{-2/p}`. This extends Krieger et al.'s
+     two-group rate, since a group can swap with every unit outside it. Over
+     `N` from 240 to 960 and `p` from 1 to 10, the fitted exponents were
+     within 0.05 of the prediction for `m` and within 0.12 for `N`.
 8. **The tail criterion under `G(K)`.** With unobserved covariates modelled as
    independent normal `z`, the OLS MSE over `z` is a weighted sum of `chi2_1`
    variables.
@@ -231,6 +253,13 @@ the `+/-1` assignment vector; `Sigma = E[WW']`.
      the exact computation within 1.3%.
 
    Choosing `K` means minimizing the first expression.
+9. **Omitted structure.** For any omitted component `g`, the MSE under `G(K)`
+   relative to complete randomization is exactly
+   `R_g = ((N-1)/N) m s_b^2 / V_g`. Here `s_b^2` is the variance of `g`'s group
+   means. `R_g` is computable before the experiment.
+   - Mean-only anticlustering into small groups gave `R_g` of 1.33 to 1.76 for
+     squares and interactions.
+   - Balancing those terms too gave 0.41 to 0.81.
 
 ## 5. Evidence
 
@@ -285,40 +314,79 @@ The mean barely moves with `K`; the quantile falls with `K` like
 `chi2_{K-1}(0.95)/(K-1)`. The quantile computed from eigenvalues agrees with
 a brute-force quantile over 40,000 draws of `z` within 0.5%.
 
-## 6. What has to be shown next
+### Comparison of designs (`scripts/gk_compare.py`)
 
-`G(K)` is a candidate for the many-covariate, small-group regime. Before it is
-a recommendation:
+**Setup.**
 
-1. **A proof of Proposition 7.** The rate is a heuristic that fits the
-   simulations. A proof would extend Krieger et al.'s two-group argument to
-   `K` groups. The excess `N` exponent (about 0.1) is unexplained.
-2. **Robustness beyond isotropic `z`.** Proposition 8 models unobserved
-   covariates as independent noise. An omitted function of `X` that the
-   partition did not balance is not isotropic: it lines up with group
-   contrasts. Bound the tail for that case.
-3. **A comparison at matched robustness**, in the regime where `G(K)` can win
-   (`p/N` of 0.15 or more, groups of 2 to 4).
-   - Sweep `K`.
-   - Compare `G(K)` against:
-     - tail-criterion rerandomization;
-     - greedy pair-switching and its matched-pairs hybrid;
-     - matched tuples;
-     - the Gram-Schmidt Walk;
-     - complete randomization with good adjustment, which should include the
-       same nonlinear features the design is given.
-   - At small `N`, also compare against Kallus's inference-constrained
-     design, where his solver runs.
-   - Report MSE, power, interval coverage and length, and sharp-null and
-     weak-null rejection rates separately.
-   - Include heterogeneous effects and heteroskedasticity, plus outcome
-     components aligned with group membership.
-   - Use enough replications to attach uncertainty to differences between
-     designs.
+- `N = 120` and `p` in {5, 20, 30}, with 20 covariate draws each.
+- 4,000 assignments per design and draw.
+- Every design analysed by OLS on `(1, T, X)`.
 
-Also open: more than two arms, the many-group case where ABA's speed matters,
-and a real dataset (Lalonde, with 1974 and 1975 earnings as prognostic
-covariates).
+**Metrics.**
+
+- *MSE over `z`.* The MSE over unmeasured noise `z` (mean and 95% quantile),
+  relative to `4 sigma^2/N`, from 2,000 draws of `z`. Its standard errors are
+  about 0.001.
+- *Omitted-signal ESS.* Complete randomization's MSE divided by the design's,
+  for a noise-free outcome made of squares and interactions of three
+  covariates that OLS does not model.
+- *Power.* Of the randomization test that redraws the design, at an effect of
+  1.96 standard deviations of the complete-randomization estimate. Its
+  standard errors are about 0.01 to 0.03.
+
+`p = 20`:
+
+| Design | Worst case | MSE over `z`, mean | MSE over `z`, 95% | Omitted-signal ESS | RI power |
+|---|---|---|---|---|---|
+| Complete randomization | 1 | 1.207 | 1.506 | 1.00 | 0.49 |
+| Rerandomization (0.1%) | | 1.046 | 1.302 | 1.13 | 0.54 |
+| Greedy pair-switching | | **1.004** | **1.252** | 1.18 | 0.56 |
+| Matched pairs | 1.98 | 1.098 | 1.456 | **1.28** | 0.55 |
+| `G(K)`, pairs | 2.02 | 1.104 | 1.464 | 0.96 | 0.51 |
+| `G(K)`, groups of 4 | 4.10 | 1.056 | 1.551 | 1.05 | 0.56 |
+| `G(K)`, groups of 4, + squares | 4.10 | 1.095 | 1.614 | 1.57 | 0.49 |
+
+`p = 30`: complete randomization has mean 1.346 and quantile 1.699, greedy
+pair-switching 1.010 and 1.274. Greedy pair-switching also has the highest
+power (0.61 against 0.48), and its omitted-signal ESS is 1.28.
+
+`p = 5`: every design's mean is within 5% of exact balance. Matched pairs
+has omitted-signal ESS 2.16; `G(K)` with pairs has 0.69.
+
+Every randomization test held its size: rejection rates under the null were
+0.044 to 0.058.
+
+What the comparison shows:
+
+1. **Local search from random starts attains Proposition 2's optimum.**
+   - Greedy pair-switching's mean MSE over `z` is 0.999 to 1.010 of the
+     exact-balance value, at every `p`.
+   - Its gain over complete randomization with OLS (4%, 20% and 33%) is close to
+     `(N-3)/(N-p-3)`, which is 4%, 21% and 34%.
+   - Its tail is the lightest of the designs compared. Restarts give it many
+     near-optimal partitions, so it keeps nearly complete randomization's
+     degrees of freedom.
+2. **Coarse randomization is the wrong way to buy randomness.** `G(K)` gets
+   its randomness from a fixed partition. Its tail pays for that
+   (Proposition 8), and its mean is no better.
+3. **Omitted nonlinearity needs targeted balance.**
+   - Matching, or balancing squares as well, beats the mean-balancing designs
+     on the omitted signal.
+   - Mean-only small groups are worse than complete randomization.
+   - Greedy pair-switching on the covariates plus their squares was not run.
+
+## 6. What is left
+
+1. **A proof of the rate in Proposition 7b.** It needs to handle the
+   dependence the algorithm introduces among the groups.
+2. **Greedy pair-switching on moment features.** Does it keep its efficiency
+   and tail while matching the omitted-signal gains of matching?
+3. **Heterogeneous effects and the weak null.** That means studentized
+   randomization tests and coverage of intervals.
+4. **Other comparisons:**
+   - the Gram-Schmidt Walk;
+   - Kallus's inference-constrained design at small `N`;
+   - a real dataset (Lalonde).
 
 ## Code and status
 
@@ -327,6 +395,7 @@ covariates).
   rerandomization, inference code, the pilot and the theory checks. It also
   holds `G(K)` in `shelldraft.grouped`: the partition (exchange run to a local
   optimum, checked against `anticlust`'s `local-maximum` method), the
-  assignment, and the closed forms. The closed forms are tested against
-  brute-force enumeration.
+  assignment, the closed forms, the local-optimum certificate and the
+  omitted-structure ratio. The closed forms are tested against brute-force
+  enumeration. The design comparison is `scripts/gk_compare.py`.
 - **`finite-sample/finite-selection`** is the Python FSM with parity to R.

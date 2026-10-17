@@ -2,7 +2,8 @@
 
 Results are for two equal arms. Section 3 gives the regression benchmark,
 section 6 the grouped design `G(K)`, section 7 how its balance scales with
-group size and section 8 how to choose `K`. `scripts/theory_check.py` sets the
+group size, section 8 how to choose `K` and section 9 what happens to omitted
+structure. `scripts/theory_check.py` sets the
 predictions beside the pilot's simulations.
 
 Two kinds of risk appear below, and they are not the same comparison.
@@ -387,9 +388,38 @@ exactly.
 
 ## 7. How balance scales with group size
 
-**Proposition 7 (heuristic, checked by simulation).** Partition `N` units with
-`p` whitened covariates into `K` groups of `m`. Run the exchange method to a
-local optimum (`shelldraft.grouped.partition`). Then
+Partition `N` units with `p` whitened covariates into `K` groups of `m`, by the
+exchange method run to a local optimum (`shelldraft.grouped.partition`). Let
+`d_g` be group `g`'s mean deviation.
+
+**Proposition 7a (a certificate at any local optimum).** For groups `g` and `h`,
+let `delta = x_j - x_i` (`i` in `g`, `j` in `h`), and let `theta` be its angle
+to `d_h - d_g`. Then
+
+```text
+|d_g - d_h|  <=  rho_gh / m,     rho_gh = min over pairs with cos theta > 0 of |delta| / cos theta,
+E[Q | partition]  <=  sum_{g<h} rho_gh^2 / ((K - 1)(N - 1)).
+```
+
+*Proof.* The exchange objective is `sum_g m |d_g|^2`. Swapping `i` and `j`
+changes it by `2 delta'(d_g - d_h) + 2 |delta|^2 / m`. At a local optimum that
+change is non-negative for every pair. So `|delta| |d_g - d_h| cos theta <=
+|delta|^2 / m`, which is the first line. A pair with `cos theta > 0` always
+exists, because the average of `x_j - x_i` over all pairs is `d_h - d_g`
+itself. For the second line:
+
+- Since `sum_g d_g = 0`, `sum_g |d_g|^2 = (1/K) sum_{g<h} |d_g - d_h|^2`.
+- Whitening gives `A = (N - 1) I`.
+- Substitute both into Proposition 6, item 4.
+
+The bound depends only on the data and the partition, so it can be reported
+with any `G(K)` partition. Across 400 partitions (`scripts/gk_bound.py`;
+`N = 240`, `p` from 1 to 10, `m` from 2 to 60) it never failed. The ratio of
+`E[Q]` to the bound was 0.1 to 0.66 for `p >= 5`, and smaller for few
+covariates, where the bound is loose.
+
+**Proposition 7b (rate; heuristic, checked by simulation).** The same partition
+gives
 
 ```text
 E[Q | partition]  ~  c_p m^{-(1 + 2/p)} N^{-2/p},
@@ -397,13 +427,14 @@ E[Q | partition]  ~  c_p m^{-(1 + 2/p)} N^{-2/p},
 
 against about `p` for a random partition or for complete randomization.
 
-*Argument.* Swapping `i` in group `g` with `j` in group `h` moves the two group
-means by `+/- (x_j - x_i) / m`. The swap helps when `x_j - x_i` falls in a ball
-of radius about `m |d_g - d_h| / 2` that touches the origin, where `d` is a
-group-mean deviation. Group `g` can trade with every unit outside it, so there
-are about `m N` candidate pairs, with a density of differences bounded near
-zero. At a local optimum no pair falls in the ball, so
-`m N (m |d_g - d_h|)^p` is of order 1, giving `|d| ~ m^{-1} (m N)^{-1/p}`.
+*Argument.* By 7a, a swap helps when `x_j - x_i` falls in a ball of radius
+about `m |d_g - d_h| / 2` that touches the origin. Group `g` can trade with
+every unit outside it, so there are about `m N` candidate pairs. Treat their
+differences as draws with a density bounded near zero; Krieger et al. (2019)
+make the same assumption for `p > 1`, and the algorithm's choice of groups
+makes it untrue in a strict sense. At a local optimum no pair falls in the
+ball, so `m N (m |d_g - d_h|)^p` is of order 1, giving
+`|d| ~ m^{-1} (m N)^{-1/p}`. A proof would need to handle that dependence.
 Item 4 of Proposition 6 then gives `E[Q] ~ (K / (K - 1)) m |d|^2`. With
 `K = 2` this is Krieger, Azriel and Kapelner's (2019) `O_p(n^{-(1 + 2/p)})`.
 Counting only swaps between one pair of groups (`m^2` pairs) would predict
@@ -496,6 +527,50 @@ large.
 
 ![Tail criterion against K](_static/gk_tail.png)
 
+## 9. Omitted structure that is not noise
+
+Proposition 8 treats what the analysis omits as independent noise. A real
+omission is usually a function of the covariates, such as a square or an
+interaction. Those line up with the partition.
+
+**Proposition 9.** Let `g` be an outcome component the analysis omits; for OLS
+under exact balance, take `g` residualized on `(1, X)`. Its contribution to the
+MSE under `G(K)`, relative to complete randomization, is exactly
+
+```text
+g' Sigma_G g / g' Sigma_CRD g  =  ((N - 1)/N) m s_b^2 / V_g  =:  R_g,
+```
+
+where:
+
+- `s_b^2` is the variance of `g`'s `K` group means (divisor `K - 1`);
+- `V_g` is the variance of `g` (divisor `N`).
+
+A random partition gives `R_g` near 1. A `g` constant within groups gives the
+worst case `(N - 1)/(K - 1)`. `R_g` can be computed for any candidate omission
+before the experiment runs (`shelldraft.grouped.relative_mse`).
+
+*Proof.* `g' Sigma_G g = (K/(K - 1)) m^2 sum_k (gbar_k - gbar)^2` from
+Proposition 6, and `g' Sigma_CRD g = (N/(N - 1)) |g - gbar|^2`. The test
+suite checks the identity against enumeration.
+
+*What it shows* (`scripts/gk_omitted.py`).
+
+- **Setup.** `N = 120`, `p` = 3 or 5, 20 draws. The candidates `g` are every
+  square and pairwise product, residualized on `X`.
+- **Mean-only anticlustering into small groups makes these omissions worse
+  than complete randomization.** Mean `R_g` was 1.33 to 1.76, rising as
+  groups shrink: 1.76 for pairs at `p = 3`. To make a pair's mean equal the
+  sample mean, the partition pairs a high unit with a low one, so the pair
+  means of `x^2` spread out.
+- **Balancing the squares and products as well cut `R_g` to 0.41 to 0.81.**
+  The cost is mean balance: `E[Q]` rose from 0.04–1.0 to 0.9–4.3, against
+  `p` under complete randomization.
+
+So which structure the partition balances decides whether small groups help or
+hurt on nonlinear outcomes. Anticluster on the functions whose omission you
+fear, and report `R_g` for the rest.
+
 ## Predictions against the pilot
 
 Simulated values carry roughly ±0.1 to 0.15 of noise (400 datasets per cell).
@@ -550,13 +625,22 @@ anticlustering, `p = 5` (the Proposition 4 illustration):
    Frobenius randomness term of Kapelner et al.'s tail criterion. The worst
    case forces `K` to grow with `N`, which puts the burden on balancing small
    groups.
-6. Exchange anticlustering balances small groups at about
-   `m^{-(1 + 2/p)} N^{-2/p}` (Proposition 7). That is fast for few covariates
-   and slow for many.
+6. Any local optimum of the exchange method carries a checkable bound on its
+   imbalance (Proposition 7a). The typical rate is about
+   `m^{-(1 + 2/p)} N^{-2/p}` (Proposition 7b): fast for few covariates, slow
+   for many.
 7. Under the tail criterion, `G(K)`'s MSE behaves like a chi-squared with
    `K - 1` degrees of freedom (Proposition 8). It beats complete
    randomization with OLS at the 95% quantile only with many small groups
    and a large `p/N`.
+8. Small groups balanced on means alone make omitted squares and interactions
+   worse than complete randomization. Balancing those functions too reverses
+   that, at a cost in mean balance (Proposition 9).
+9. In a direct comparison (report, section 5), local search from random starts
+   (greedy pair-switching) reaches Proposition 2's optimum on average and has
+   the lightest tail. So the randomness that protects against unmeasured
+   covariates is best bought with many near-optimal partitions, not with one
+   coarse partition randomized at the group level.
 
 Items 1 to 4 are known, mostly from Kallus (2018, 2020), Kapelner et al.
 (2021), Krieger et al. (2019) and Li, Ding and Rubin (2018). They are stated
