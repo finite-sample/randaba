@@ -23,9 +23,24 @@ makes all three properties explicit:
 - the test resolution `2/C(K, K/2)`.
 
 Holding the worst case to a factor `C` of complete randomization requires
-`K >= 1 + (N-1)/C`. So the question that decides whether the design is useful
-is how well anticlustering balances small groups. That question is open, and
-the pilot did not run `G(K)`.
+`K >= 1 + (N-1)/C`, so groups must be small. Two results settle how `G(K)`
+behaves (section 4, items 7 and 8).
+
+- **Small groups still balance well, more slowly with many covariates.**
+  Exchange anticlustering leaves expected imbalance `E[Q]` of about
+  `m^{-(1+2/p)} N^{-2/p}` for groups of `m`. A random split leaves about `p`.
+  This is derived heuristically and checked by simulation.
+- **The tail is where `G(K)` pays.** Kapelner et al. judge a design by a high
+  quantile of its MSE over unobserved covariates. Under that criterion,
+  `G(K)` with OLS has `K - 1` degrees of freedom, against `N - p - 1` for
+  complete randomization with OLS.
+  - It wins on the mean for every `K`.
+  - It wins at the 95% quantile only with many small groups and a large `p/N`.
+    At `N = 120` with 20 covariates that means groups of 2 or 3. With 5
+    covariates it never wins.
+
+So `G(K)` is not a general replacement for complete randomization with
+regression. It is a design for the many-covariate regime, with tiny groups.
 
 ## 1. The question
 
@@ -131,13 +146,19 @@ What the ablation shows, and what it does not:
    co-membership look random. Pair co-membership is Krieger et al.'s (2019)
    pairwise-entropy measure. Neither the probability mass on each partition
    nor the assignment covariance (its `lambda_max` or Frobenius norm) was
-   measured. Those decide robustness and testability.
+   measured. Those decide robustness and testability. Room for randomness is
+   plausible: Papenberg (2024) finds that good anticlustering partitions are
+   plentiful and unlike each other. With 14 units, 8.5% of all splits came
+   within 0.1% of the best k-means anticlustering value, and partitions from
+   different criteria had near-zero adjusted Rand index.
 2. **Shuffling labels at the end is mandatory.** Without it, jitter left some
    units in group 0 in 83% of draws. The pairs check could not see this,
    because it ignores labels.
-3. **Balancing means can unbalance spread.** Two fixes exist. The k-plus
-   criterion (Papenberg 2024) appends each covariate's squared and higher
-   deviations, which balances marginal variances but not covariances.
+3. **Balancing means can unbalance spread**, as Papenberg and Klau (2021)
+   found for k-means anticlustering. Two fixes exist. The k-plus criterion
+   (Papenberg 2024) appends each covariate's squared and higher deviations,
+   which balances marginal variances, skewness and kurtosis but not
+   covariances. He names covariances as future work.
    Balancing squares and cross-products together is the design of Bertsimas,
    Johnson and Kallus (2015), whose multivariate formulation includes the
    cross-moments, and Kallus's (2018) quadratic-kernel allocation. Either
@@ -191,6 +212,25 @@ the `+/-1` assignment vector; `Sigma = E[WW']`.
      `t_{K-2}` reference is only an approximation: with `K = 8`, one null
      configuration rejects 14% of the time at a nominal 5%. Lu et al.'s
      simulations suggest normal-based intervals need a few dozen groups.
+7. **Balance against group size** (heuristic, checked). Exchange
+   anticlustering to a local optimum gives
+   `E[Q] ~ c_p m^{-(1+2/p)} N^{-2/p}`. This extends Krieger et al.'s
+   two-group rate, since a group can swap with every unit outside it. Over
+   `N` from 240 to 960 and `p` from 1 to 10, the fitted exponents were within
+   0.05 of the prediction for `m` and within 0.12 for `N`.
+8. **The tail criterion under `G(K)`.** With unobserved covariates modelled as
+   independent normal `z`, the OLS MSE over `z` is a weighted sum of `chi2_1`
+   variables.
+   - Under `G(K)` the weights come from a `K x K` matrix and are exact given
+     the partition.
+   - With exact balance there are `K - 1` equal weights, so the MSE is
+     `(4 sigma^2/N) chi2_{K-1}/(K-1)`.
+   - The `q` quantile is about `(1 + E[Q]/N) chi2_{K-1}(q)/(K-1)` for `G(K)`,
+     against `((N-3)/(N-p-3)) chi2_{N-p-1}(q)/(N-p-1)` for complete
+     randomization with OLS. Both are relative to `4 sigma^2/N`. They match
+     the exact computation within 1.3%.
+
+   Choosing `K` means minimizing the first expression.
 
 ## 5. Evidence
 
@@ -224,20 +264,41 @@ The t-test against the randomization test, under exchange anticlustering with
 | Predicted | 0.006 | 0.50 | 0.79 |
 | Simulated | 0.003 to 0.007 | 0.43 to 0.51 | 0.76 to 0.81 |
 
+### `G(K)` (`scripts/gk_rate.py`, `scripts/gk_tail.py`)
+
+At `N = 120`, five covariate draws per setting, and MSE relative to an exactly
+balanced design (`4 sigma^2/N`):
+
+| p | Design | Mean | 95% quantile |
+|---|---|---|---|
+| 5 | CRD + OLS | 1.045 | 1.282 |
+| 5 | `G(K)`, K = 10 | 1.000 | 1.880 |
+| 5 | `G(K)`, K = 60 | 1.008 | 1.333 |
+| 20 | CRD + OLS | 1.206 | 1.502 |
+| 20 | `G(K)`, K = 10 | 1.019 | 1.917 |
+| 20 | `G(K)`, K = 40 | 1.070 | 1.500 |
+| 20 | `G(K)`, K = 60 | 1.104 | 1.463 |
+
+![MSE mean and 95% quantile against K](_static/gk_tail.png)
+
+The mean barely moves with `K`; the quantile falls with `K` like
+`chi2_{K-1}(0.95)/(K-1)`. The quantile computed from eigenvalues agrees with
+a brute-force quantile over 40,000 draws of `z` within 0.5%.
+
 ## 6. What has to be shown next
 
-`G(K)` is a proposal, not a recommendation, until three things are done.
+`G(K)` is a candidate for the many-covariate, small-group regime. Before it is
+a recommendation:
 
-1. **A balance theorem for small groups.** Bound the partition's group-mean
-   deviation `D` as a function of `N`, `K` and `p` for a specific
-   anticlustering algorithm. For two groups the analogues exist: exponential
-   for the optimum (Bertsimas et al. 2015) and `O_p(n^{-(1+2/p)})` for greedy
-   switching (Krieger et al. 2019). Through `E[Q]` above, a `K`-group bound
-   becomes a risk bound at a fixed worst case `C`.
-2. **Choosing `K`.** Minimize Kapelner et al.'s tail criterion over `K`, using
-   the closed-form `E[Q]` and `||Sigma||_F^2`. Check the choice against their
-   sampled threshold for rerandomization on the same data.
-3. **A comparison at matched robustness.**
+1. **A proof of Proposition 7.** The rate is a heuristic that fits the
+   simulations. A proof would extend Krieger et al.'s two-group argument to
+   `K` groups. The excess `N` exponent (about 0.1) is unexplained.
+2. **Robustness beyond isotropic `z`.** Proposition 8 models unobserved
+   covariates as independent noise. An omitted function of `X` that the
+   partition did not balance is not isotropic: it lines up with group
+   contrasts. Bound the tail for that case.
+3. **A comparison at matched robustness**, in the regime where `G(K)` can win
+   (`p/N` of 0.15 or more, groups of 2 to 4).
    - Sweep `K`.
    - Compare `G(K)` against:
      - tail-criterion rerandomization;
@@ -263,6 +324,9 @@ covariates).
 
 - **This repository** (`finite-sample/shelldraft`, private) holds the shell
   draft, a replica of `anticlust`'s exchange method checked exactly against R,
-  rerandomization, inference code, the pilot and the theory checks. `G(K)` is
-  not yet implemented.
+  rerandomization, inference code, the pilot and the theory checks. It also
+  holds `G(K)` in `shelldraft.grouped`: the partition (exchange run to a local
+  optimum, checked against `anticlust`'s `local-maximum` method), the
+  assignment, and the closed forms. The closed forms are tested against
+  brute-force enumeration.
 - **`finite-sample/finite-selection`** is the Python FSM with parity to R.

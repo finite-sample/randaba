@@ -134,20 +134,25 @@ def exchange_anticlust(
     rng: np.random.Generator,
     *,
     init: np.ndarray | None = None,
+    local_max: bool = False,
 ) -> np.ndarray:
-    """One pass of the exchange method on the k-means anticlustering objective.
+    """The exchange method on the k-means anticlustering objective.
 
     Starting from a random equal split (or ``init``), each unit in turn is
     swapped with the unit in another group whose swap most reduces the spread
-    of the group centroids, if any swap reduces it. This is the procedure
+    of the group centroids, if any swap reduces it. One pass is the procedure
     Papenberg and Angelike (2026) use, after R ``anticlust``'s ``exchange``
-    method with ``objective = "variance"``.
+    method with ``objective = "variance"``. With ``local_max`` the passes
+    repeat until one makes no swap, as in ``anticlust``'s ``local-maximum``
+    method; for two groups this is greedy pair-switching (Krieger, Azriel and
+    Kapelner 2019) with the unweighted Euclidean objective.
 
     Args:
         x: Covariates, one row per unit, used as given (not standardized).
         k: Number of groups.
         rng: Random number generator, used for the initial split.
         init: Optional initial labels.
+        local_max: Repeat passes until a local optimum.
 
     Returns:
         Group labels.
@@ -157,7 +162,16 @@ def exchange_anticlust(
     z = crd(n, k, rng) if init is None else np.asarray(init, dtype=int).copy()
     sums = np.array([x[z == g].sum(axis=0) for g in range(k)])
     sizes = np.bincount(z, minlength=k).astype(float)
-    for i in range(n):
+    while _exchange_pass(x, z, sums, sizes) and local_max:
+        pass
+    return z
+
+
+def _exchange_pass(
+    x: np.ndarray, z: np.ndarray, sums: np.ndarray, sizes: np.ndarray
+) -> bool:
+    swapped = False
+    for i in range(len(x)):
         a = z[i]
         others = np.flatnonzero(z != a)
         b = z[others]
@@ -172,7 +186,8 @@ def exchange_anticlust(
             sums[a] += x[u] - x[i]
             sums[g] += x[i] - x[u]
             z[i], z[u] = g, a
-    return z
+            swapped = True
+    return swapped
 
 
 def rerandomize(

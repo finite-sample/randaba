@@ -20,7 +20,11 @@ def x():
 def test_exchange_matches_r_anticlust(case):
     x = np.array(case["x"], dtype=float)
     out = designs.exchange_anticlust(
-        x, case["k"], np.random.default_rng(0), init=np.array(case["init"])
+        x,
+        case["k"],
+        np.random.default_rng(0),
+        init=np.array(case["init"]),
+        local_max=case["method"] == "local-maximum",
     )
     np.testing.assert_array_equal(out, case["out"])
 

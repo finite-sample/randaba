@@ -1,7 +1,8 @@
 # Theory: what a balancing design buys, and what it costs
 
 Results are for two equal arms. Section 3 gives the regression benchmark,
-section 6 the grouped design `G(K)`. `scripts/theory_check.py` sets the
+section 6 the grouped design `G(K)`, section 7 how its balance scales with
+group size and section 8 how to choose `K`. `scripts/theory_check.py` sets the
 predictions beside the pilot's simulations.
 
 Two kinds of risk appear below, and they are not the same comparison.
@@ -328,7 +329,7 @@ of group labels and `W = G s`.
    - Greedy pair-switching from a random start reaches
      `O_p(n^{-(1 + 2/p)})` (Krieger et al. 2019).
 
-   For `K` groups of size `m` built by exchange or ABA, the rate is open.
+   For `K` groups of size `m` built by exchange, see Proposition 7.
 5. *Variance estimation.* Conditional on the partition, the group mean
    potential outcomes `Ybar_g(t)` are fixed numbers, and with equal groups the
    unit-level difference in means equals the difference in group means. So
@@ -381,7 +382,119 @@ trace(X_perp' Sigma X_perp)  +  c (2 ||(I - P) Sigma||_F^2 + ...)^{1/2}.
 Under `G(K)` the first term is `E[Q]` from item 4. The second is at most
 `N^2 / (K - 1)` from item 2. So `K` can be chosen by minimizing a
 one-dimensional criterion in near closed form, where Kapelner et al. tune a
-rerandomization threshold by sampling. Doing this is proposed, not done.
+rerandomization threshold by sampling. Section 8 computes that criterion
+exactly.
+
+## 7. How balance scales with group size
+
+**Proposition 7 (heuristic, checked by simulation).** Partition `N` units with
+`p` whitened covariates into `K` groups of `m`. Run the exchange method to a
+local optimum (`shelldraft.grouped.partition`). Then
+
+```text
+E[Q | partition]  ~  c_p m^{-(1 + 2/p)} N^{-2/p},
+```
+
+against about `p` for a random partition or for complete randomization.
+
+*Argument.* Swapping `i` in group `g` with `j` in group `h` moves the two group
+means by `+/- (x_j - x_i) / m`. The swap helps when `x_j - x_i` falls in a ball
+of radius about `m |d_g - d_h| / 2` that touches the origin, where `d` is a
+group-mean deviation. Group `g` can trade with every unit outside it, so there
+are about `m N` candidate pairs, with a density of differences bounded near
+zero. At a local optimum no pair falls in the ball, so
+`m N (m |d_g - d_h|)^p` is of order 1, giving `|d| ~ m^{-1} (m N)^{-1/p}`.
+Item 4 of Proposition 6 then gives `E[Q] ~ (K / (K - 1)) m |d|^2`. With
+`K = 2` this is Krieger, Azriel and Kapelner's (2019) `O_p(n^{-(1 + 2/p)})`.
+Counting only swaps between one pair of groups (`m^2` pairs) would predict
+`m^{-(1 + 4/p)}` instead, and the simulation rejects that.
+
+*Check* (`scripts/gk_rate.py`). The design was:
+
+- `N` in {240, 480, 960}, `p` in {1, 2, 5, 10};
+- `m` from 6 to 120;
+- 20 covariate draws per cell.
+
+Regressing `log E[Q]` on `log m` and `log N`:
+
+| p | `log m` (predicted) | `log N` (predicted) |
+|---|---|---|
+| 1 | -2.99 (-3.00) | -2.12 (-2.00) |
+| 2 | -1.96 (-2.00) | -1.07 (-1.00) |
+| 5 | -1.37 (-1.40) | -0.49 (-0.40) |
+| 10 | -1.18 (-1.20) | -0.31 (-0.20) |
+
+Random partitions gave `E[Q]` of about `p` at every `m`. The `N` exponent runs
+about 0.1 steeper than predicted, which the heuristic does not explain.
+
+*The robustness frontier.* For large `K`, the worst-case factor
+`(N - 1)/(K - 1)` is about `m`. So holding the worst case to `C` caps the
+imbalance at about `E[Q] ~ c_p C^{-(1 + 2/p)} N^{-2/p}`. Balance improves
+polynomially in the robustness one gives up, and more slowly the more
+covariates there are.
+
+## 8. Choosing K by the tail of the MSE
+
+Kapelner et al. (2021; arXiv:1905.03337) treat unobserved covariates as a
+random vector `z` and judge a design by a high quantile of its MSE over `z`.
+That is less pessimistic than the worst case.
+
+**Proposition 8.** Let `Y = alpha + tau T + X beta + z` with a constant effect,
+and estimate `tau` by OLS on `(1, T, X)`. Given `z`, the design MSE is
+`z' M z` with
+
+```text
+M = 4 (I - P) E[W W' / (N - Q)^2] (I - P).
+```
+
+If `z` has independent `N(0, sigma^2)` entries, the MSE over `z` is distributed
+as `sigma^2 sum_i lambda_i chi2_1`, where `lambda_i` are the eigenvalues of `M`.
+Its mean is Proposition 2's `4 sigma^2 E[1/(N - Q)]`.
+
+1. *Under `G(K)` this is a `K x K` computation, exact given the partition.*
+   The nonzero eigenvalues are those of `4 H^{1/2} (m I - m^2 B) H^{1/2}`,
+   with `B = D A^{-1} D'` and `H = E[s s' / (N - m^2 s' B s)^2]`. The
+   expectation runs over the `C(K, K/2)` label assignments.
+2. *Exact balance gives `K - 1` degrees of freedom.* If `D = 0`, the `K - 1`
+   eigenvalues all equal `4 / (N (K - 1))`, and the MSE is
+   `(4 sigma^2 / N) chi2_{K-1} / (K - 1)`. Its mean is optimal, but its
+   spread is that of a chi-squared with `K - 1` degrees of freedom.
+3. *Closed-form approximations.* Write `chi2_k(q)` for the `q` quantile of a
+   chi-squared with `k` degrees of freedom. Relative to `4 sigma^2 / N`, the
+   `q` quantile of the MSE is about
+
+   ```text
+   G(K) + OLS:  (1 + E[Q]/N) chi2_{K-1}(q) / (K - 1)
+   CRD  + OLS:  ((N - 3)/(N - p - 3)) chi2_{N-p-1}(q) / (N - p - 1)
+   ```
+
+   The second form averages over Gaussian covariates (Corollary 2b).
+
+*Checks* (`tests/test_grouped.py`, `scripts/gk_tail.py`):
+
+- The `K x K` eigenvalues equal those of the `N x N` matrix built by brute
+  force over all assignments.
+- The quantile from the eigenvalues matches a brute-force quantile over
+  40,000 draws of `z` within 0.5%.
+- The closed forms match the exact computation within 1.3% at `N = 120` and
+  `p` = 5 and 20, for every `K` from 2 to 60.
+
+*Consequence.* `G(K)` with OLS beats complete randomization with OLS on the
+mean for every `K` (Proposition 2). At the 95% quantile it does so only when
+`chi2_{K-1}(q)/(K - 1)` falls below the complete-randomization term. Its MSE
+over unobserved covariates has `K - 1` degrees of freedom, against `N - p - 1`
+for complete randomization. At `N = 120`:
+
+- With `p = 5`, complete randomization has the better tail for every `K` up
+  to 60.
+- With `p = 20`, `G(K)` matches it at `K = 40` (groups of 3) and beats it at
+  `K = 60` (pairs).
+
+Choosing `K` is minimizing the first closed form, with `E[Q]` from
+Proposition 7. The answer favours many small groups, and only when `p/N` is
+large.
+
+![Tail criterion against K](_static/gk_tail.png)
 
 ## Predictions against the pilot
 
@@ -437,6 +550,13 @@ anticlustering, `p = 5` (the Proposition 4 illustration):
    Frobenius randomness term of Kapelner et al.'s tail criterion. The worst
    case forces `K` to grow with `N`, which puts the burden on balancing small
    groups.
+6. Exchange anticlustering balances small groups at about
+   `m^{-(1 + 2/p)} N^{-2/p}` (Proposition 7). That is fast for few covariates
+   and slow for many.
+7. Under the tail criterion, `G(K)`'s MSE behaves like a chi-squared with
+   `K - 1` degrees of freedom (Proposition 8). It beats complete
+   randomization with OLS at the 95% quantile only with many small groups
+   and a large `p/N`.
 
 Items 1 to 4 are known, mostly from Kallus (2018, 2020), Kapelner et al.
 (2021), Krieger et al. (2019) and Li, Ding and Rubin (2018). They are stated
