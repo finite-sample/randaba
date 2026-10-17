@@ -83,3 +83,15 @@ def test_shell_draft_inclusion_is_uniform():
 def test_bad_sizes_raise():
     with pytest.raises(ValueError, match="multiple"):
         designs.shell_draft(np.zeros((7, 1)), 2, np.random.default_rng(0))
+
+
+def test_greedy_switch_balances_and_is_label_symmetric(x):
+    rng = np.random.default_rng(4)
+    draws = np.array([designs.greedy_switch(x, rng) for _ in range(400)])
+    assert (draws.sum(axis=1) == 30).all()
+    np.testing.assert_allclose(draws.mean(axis=0), 0.5, atol=0.1)
+    gap = np.abs(x[draws[0] == 1].mean(0) - x[draws[0] == 0].mean(0)).max()
+    crd_gap = np.abs(x[:30].mean(0) - x[30:].mean(0)).max()
+    assert gap < crd_gap / 10
+    with_sq = designs.greedy_switch(x, rng, features=np.column_stack([x, x**2]))
+    assert with_sq.sum() == 30

@@ -1,6 +1,5 @@
-# balance_buys
-
-Randomized balanced assignment by jittered shell anticlustering, with exact randomization inference
+```{include} ../README.md
+```
 
 ```{toctree}
 :maxdepth: 2

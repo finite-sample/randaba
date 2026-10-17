@@ -26,15 +26,15 @@ squares (OLS).
     remaining imbalance.
 - **A hazard.** Small groups balanced on means alone make omitted squares and
   interactions up to 76% worse than complete randomization.
-- **What works.** In a comparison at 17 to 25 covariates per 100 units, local
-  search from many random starts (greedy pair-switching) reaches the
-  exact-balance optimum on average. It also has the lightest tail of any
-  design compared, and supports an exact randomization test. Matching or
-  balancing squares as well guards against omitted nonlinearity.
+- **What works.** We compared nine designs at 17 to 25 covariates per 100
+  units. Local search from many random starts (greedy pair-switching) on the
+  covariates and their squares came within 2.5% of the exact-balance optimum
+  on average and kept a light tail. It also roughly tripled protection against
+  omitted nonlinear terms and supported an exact randomization test.
 
 The practical rule follows. With few covariates per unit, randomize and adjust.
-With many, balance by local search from random starts, test by redrawing the
-design, and balance the nonlinear terms the outcome may carry.
+With many, balance the covariates and their squares by local search from
+random starts, and test by redrawing the design.
 
 ## Summary of results
 
@@ -45,7 +45,7 @@ design, and balance the nonlinear terms the outcome may carry.
 | How well do small groups balance? | A certificate at any local optimum; typical rate `m^{-(1+2/p)} N^{-2/p}` | Prop. 7 |
 | How does coarse randomization show up in the tail? | The MSE over unmeasured covariates has `K - 1` degrees of freedom | Prop. 8 |
 | What happens to omitted nonlinear terms? | Mean-only small groups make them worse; balancing them reverses it | Prop. 9 |
-| Which design to use? | Local search from random starts; add moment balancing or matching for nonlinear outcomes | Section 5 |
+| Which design to use? | Greedy pair-switching on the covariates and their squares | Section 5 |
 
 Much of the framing is prior work: Kallus (2018, 2020), Krieger, Azriel and
 Kapelner (2019), Kapelner et al. (2021), Li, Ding and Rubin (2018), and
@@ -341,6 +341,7 @@ a brute-force quantile over 40,000 draws of `z` within 0.5%.
 | Complete randomization | 1 | 1.207 | 1.506 | 1.00 | 0.49 |
 | Rerandomization (0.1%) | | 1.046 | 1.302 | 1.13 | 0.54 |
 | Greedy pair-switching | | **1.004** | **1.252** | 1.18 | 0.56 |
+| Greedy pair-switching, + squares | | 1.008 | 1.294 | 3.19 | 0.56 |
 | Matched pairs | 1.98 | 1.098 | 1.456 | **1.28** | 0.55 |
 | `G(K)`, pairs | 2.02 | 1.104 | 1.464 | 0.96 | 0.51 |
 | `G(K)`, groups of 4 | 4.10 | 1.056 | 1.551 | 1.05 | 0.56 |
@@ -373,17 +374,18 @@ What the comparison shows:
    - Matching, or balancing squares as well, beats the mean-balancing designs
      on the omitted signal.
    - Mean-only small groups are worse than complete randomization.
-   - Greedy pair-switching on the covariates plus their squares was not run.
+   - Greedy pair-switching on the covariates plus their squares does best
+     overall. It is within 2.5% of the optimum on the mean, and its
+     omitted-signal ESS is 2.9 to 3.3. At `p` = 20 and 30 it has the highest
+     power on the nonlinear outcome (0.50 and 0.52).
 
 ## 6. What is left
 
 1. **A proof of the rate in Proposition 7b.** It needs to handle the
    dependence the algorithm introduces among the groups.
-2. **Greedy pair-switching on moment features.** Does it keep its efficiency
-   and tail while matching the omitted-signal gains of matching?
-3. **Heterogeneous effects and the weak null.** That means studentized
+2. **Heterogeneous effects and the weak null.** That means studentized
    randomization tests and coverage of intervals.
-4. **Other comparisons:**
+3. **Other comparisons:**
    - the Gram-Schmidt Walk;
    - Kallus's inference-constrained design at small `N`;
    - a real dataset (Lalonde).

@@ -190,6 +190,34 @@ def _exchange_pass(
     return swapped
 
 
+def greedy_switch(
+    x: np.ndarray,
+    rng: np.random.Generator,
+    *,
+    features: np.ndarray | None = None,
+) -> np.ndarray:
+    """Two equal arms by greedy pair-switching from a random start.
+
+    A random equal split is improved by swapping units between the arms until
+    no swap reduces the distance between the arms' means (Krieger, Azriel and
+    Kapelner 2019). Distances are Mahalanobis on ``features`` (default
+    ``x``); pass the covariates with their squares to balance spread as well.
+    Each call starts from a fresh random split, so repeated calls draw from
+    the design, which is what a randomization test needs.
+
+    Args:
+        x: Covariates, one row per unit.
+        rng: Random number generator.
+        features: Optional matrix to balance instead of ``x``.
+
+    Returns:
+        Treatment indicators (0 or 1), half of each, with labels shuffled.
+    """
+    basis = x if features is None else features
+    z = exchange_anticlust(whiten(basis), 2, rng, local_max=True)
+    return z if rng.random() < 0.5 else 1 - z
+
+
 def rerandomize(
     x: np.ndarray,
     rng: np.random.Generator,

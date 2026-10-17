@@ -53,9 +53,9 @@ def rerand(x, rng, accept=0.001):
     return np.concatenate(kept)[:DRAWS]
 
 
-def greedy(x, rng):
+def greedy(x, rng, basis=None):
     """Greedy pair-switching: two-group exchange to a local optimum."""
-    w = whiten(x)
+    w = whiten(x if basis is None else basis)
     out = np.empty((DRAWS, N))
     for r in range(DRAWS):
         out[r] = 2.0 * exchange_anticlust(w, 2, rng, local_max=True) - 1
@@ -91,6 +91,15 @@ def squares(x):
     return np.column_stack([x, x**2])
 
 
+def second_moments(x):
+    """Covariates, squares and pairwise products, or None if too many for N."""
+    p = x.shape[1]
+    if 2 * p + p * (p - 1) // 2 > N // 4:
+        return None
+    prods = [x[:, a] * x[:, b] for a, b in combinations(range(p), 2)]
+    return np.column_stack([x, x**2, *prods])
+
+
 DESIGNS = {
     "CRD": (crd, 1.0),
     "rerandomization": (rerand, np.nan),
@@ -102,6 +111,16 @@ DESIGNS = {
     "G(K), groups of 4, + squares": (
         lambda x, r: gk(x, r, 4, squares(x)),
         (N - 1) / (N // 4 - 1),
+    ),
+    "greedy pair-switching, + squares": (
+        lambda x, r: greedy(x, r, squares(x)),
+        np.nan,
+    ),
+    "greedy pair-switching, + squares and products": (
+        lambda x, r: (
+            None if second_moments(x) is None else greedy(x, r, second_moments(x))
+        ),
+        np.nan,
     ),
 }
 
@@ -177,6 +196,8 @@ def one(p, rep):
     rows = []
     for name, (draw, worst) in DESIGNS.items():
         w = w_crd if name == "CRD" else draw(x, rng)
+        if w is None:
+            continue
         rows.append(
             {"p": p, "rep": rep, "design": name, "worst_case": worst}
             | evaluate(w, x, ys, tau, rng)
@@ -203,11 +224,13 @@ if __name__ == "__main__":
     order = list(DESIGNS)
     pd.set_option("display.width", 250)
     for p, g in df.groupby("p"):
-        mean = g.groupby("design")[cols].mean().loc[order]
-        sem = g.groupby("design")[cols].sem().loc[order]
+        present = [d for d in order if d in set(g.design)]
+        mean = g.groupby("design")[cols].mean().loc[present]
+        sem = g.groupby("design")[cols].sem().loc[present]
         for name in ("linear", "nonlinear", "signal"):
             mse = g.pivot(index="rep", columns="design", values=f"mse_{name}")
-            mean[f"ess_{name}"] = mse["CRD"].mean() / mse[order].mean()
+            present = [d for d in order if d in mse]
+            mean[f"ess_{name}"] = mse["CRD"].mean() / mse[present].mean()
         print(f"\np = {p}: mean across 20 covariate draws (ESS: ratio of mean MSEs)")
         print(mean.round(3).to_string())
         print("standard error")
