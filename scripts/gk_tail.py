@@ -16,7 +16,7 @@ import pandas as pd
 from matplotlib.ticker import NullFormatter
 from scipy import stats
 
-from shelldraft import grouped
+from balance_buys import grouped
 
 OUT = Path("results/gk_tail.parquet")
 FIG = Path("docs/_static/gk_tail.png")

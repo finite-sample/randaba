@@ -1,12 +1,12 @@
 # API
 
 ```{eval-rst}
-.. automodule:: shelldraft.designs
+.. automodule:: balance_buys.designs
    :members:
 
-.. automodule:: shelldraft.grouped
+.. automodule:: balance_buys.grouped
    :members:
 
-.. automodule:: shelldraft.inference
+.. automodule:: balance_buys.inference
    :members:
 ```

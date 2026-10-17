@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
 
-from shelldraft import grouped
+from balance_buys import grouped
 
 OUT = Path("results/gk_bound.parquet")
 

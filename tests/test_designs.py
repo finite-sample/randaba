@@ -4,7 +4,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from shelldraft import designs
+from balance_buys import designs
 
 FIXTURES = Path(__file__).parent / "fixtures"
 

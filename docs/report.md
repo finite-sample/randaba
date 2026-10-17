@@ -154,7 +154,7 @@ The **shell draft** is ABA made random:
 5. Shuffle the group labels at the end.
 
 The pilot used `sigma = 1` and centroid distance. Its code is
-`shelldraft.designs.shell_draft`.
+`balance_buys.designs.shell_draft`.
 
 What the ablation shows, and what it does not:
 
@@ -390,10 +390,10 @@ What the comparison shows:
 
 ## Code and status
 
-- **This repository** (`finite-sample/shelldraft`, private) holds the shell
+- **This repository** (`finite-sample/balance_buys`, private) holds the shell
   draft, a replica of `anticlust`'s exchange method checked exactly against R,
   rerandomization, inference code, the pilot and the theory checks. It also
-  holds `G(K)` in `shelldraft.grouped`: the partition (exchange run to a local
+  holds `G(K)` in `balance_buys.grouped`: the partition (exchange run to a local
   optimum, checked against `anticlust`'s `local-maximum` method), the
   assignment, the closed forms, the local-optimum certificate and the
   omitted-structure ratio. The closed forms are tested against brute-force

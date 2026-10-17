@@ -1,7 +1,7 @@
 """Basic package tests."""
 
-import shelldraft
+import balance_buys
 
 
 def test_version() -> None:
-    assert shelldraft.__version__
+    assert balance_buys.__version__

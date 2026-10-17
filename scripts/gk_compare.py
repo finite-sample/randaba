@@ -24,8 +24,8 @@ import pandas as pd
 from joblib import Parallel, delayed
 from scipy import stats
 
-from shelldraft import grouped
-from shelldraft.designs import exchange_anticlust, whiten
+from balance_buys import grouped
+from balance_buys.designs import exchange_anticlust, whiten
 
 OUT = Path("results/gk_compare.parquet")
 N = 120

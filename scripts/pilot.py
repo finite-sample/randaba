@@ -13,7 +13,7 @@ import pandas as pd
 from joblib import Parallel, delayed
 from registry import DESIGNS
 
-from shelldraft import inference
+from balance_buys import inference
 
 OUT = Path(__file__).resolve().parents[1] / "results" / "pilot"
 GRID = [

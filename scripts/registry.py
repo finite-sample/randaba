@@ -5,7 +5,7 @@ from collections.abc import Callable
 import finite_selection as fs
 import numpy as np
 
-from shelldraft import designs
+from balance_buys import designs
 
 
 def _fsm(x: np.ndarray, rng: np.random.Generator) -> np.ndarray:

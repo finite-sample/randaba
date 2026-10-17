@@ -12,7 +12,7 @@ from math import comb
 
 import numpy as np
 
-from shelldraft.designs import exchange_anticlust, whiten
+from balance_buys.designs import exchange_anticlust, whiten
 
 ENUMERATE_MAX = 20
 

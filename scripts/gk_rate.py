@@ -11,8 +11,8 @@ import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
 
-from shelldraft import grouped
-from shelldraft.designs import crd
+from balance_buys import grouped
+from balance_buys.designs import crd
 
 OUT = Path("results/gk_rate.parquet")
 SIZES = [2, 4, 6, 8, 10, 12, 20, 24, 30, 40, 60, 120]

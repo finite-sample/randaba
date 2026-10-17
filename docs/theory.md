@@ -389,7 +389,7 @@ exactly.
 ## 7. How balance scales with group size
 
 Partition `N` units with `p` whitened covariates into `K` groups of `m`, by the
-exchange method run to a local optimum (`shelldraft.grouped.partition`). Let
+exchange method run to a local optimum (`balance_buys.grouped.partition`). Let
 `d_g` be group `g`'s mean deviation.
 
 **Proposition 7a (a certificate at any local optimum).** For groups `g` and `h`,
@@ -548,7 +548,7 @@ where:
 
 A random partition gives `R_g` near 1. A `g` constant within groups gives the
 worst case `(N - 1)/(K - 1)`. `R_g` can be computed for any candidate omission
-before the experiment runs (`shelldraft.grouped.relative_mse`).
+before the experiment runs (`balance_buys.grouped.relative_mse`).
 
 *Proof.* `g' Sigma_G g = (K/(K - 1)) m^2 sum_k (gbar_k - gbar)^2` from
 Proposition 6, and `g' Sigma_CRD g = (N/(N - 1)) |g - gbar|^2`. The test

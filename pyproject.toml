@@ -1,6 +1,6 @@
 [project]
-name = "shelldraft"
-description = "Randomized balanced assignment by jittered shell anticlustering, with exact randomization inference"
+name = "balance_buys"
+description = "What covariate balancing at assignment buys over regression adjustment, and what it costs: designs, closed forms and randomization inference"
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
@@ -17,16 +17,16 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/finite-sample/shelldraft"
-Documentation = "https://finite-sample.github.io/shelldraft/"
-Repository = "https://github.com/finite-sample/shelldraft"
+Homepage = "https://github.com/finite-sample/balance_buys"
+Documentation = "https://finite-sample.github.io/balance_buys/"
+Repository = "https://github.com/finite-sample/balance_buys"
 
 [build-system]
 requires = ["uv_build>=0.12.5,<0.13"]
 build-backend = "uv_build"
 
 [tool.uv.build-backend]
-module-name = "shelldraft"
+module-name = "balance_buys"
 
 [tool.uv.sources]
 finite-selection = { git = "https://github.com/finite-sample/finite-selection" }

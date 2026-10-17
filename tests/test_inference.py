@@ -1,6 +1,6 @@
 import numpy as np
 
-from shelldraft import inference
+from balance_buys import inference
 
 
 def test_ols_coef_matches_lstsq_for_many_splits():

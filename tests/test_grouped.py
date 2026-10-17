@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from scipy import stats
 
-from shelldraft import grouped
+from balance_buys import grouped
 
 
 def _all_assignments(groups):
