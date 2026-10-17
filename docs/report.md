@@ -12,12 +12,20 @@ distribution decide it:
 - **Testability**, the probability mass on the observed partition, which
   bounds the smallest randomization p-value.
 
-Grouped randomization `G(K)` makes all three explicit. It anticlusters into
-`K` groups, then randomizes whole groups to arms. Holding the worst case to a
-factor `C` of complete randomization requires `K >= 1 + (N-1)/C`. So the
-question that decides whether the design is useful is how well anticlustering
-balances small groups. That question is open, and the pilot did not run
-`G(K)`.
+This framing is not new: it is Kallus's (2018, 2020) and that of Krieger,
+Kapelner and Azriel (2019, 2021). What may be new is grouped randomization `G(K)`. It
+anticlusters into `K` groups, then randomizes whole groups to arms, and it
+makes all three properties explicit:
+
+- the worst case `(N-1)/(K-1)`;
+- the Frobenius randomness term `N^2/(K-1)` of Kapelner et al.'s tail
+  criterion;
+- the test resolution `2/C(K, K/2)`.
+
+Holding the worst case to a factor `C` of complete randomization requires
+`K >= 1 + (N-1)/C`. So the question that decides whether the design is useful
+is how well anticlustering balances small groups. That question is open, and
+the pilot did not run `G(K)`.
 
 ## 1. The question
 
@@ -40,12 +48,15 @@ randomization.
 | Complete randomization | none by design | maximal | standard |
 | Blocking, matched pairs and tuples (Bai 2022; Bai, Liu and Tabord-Meehan 2024) | similar units grouped, treatment varied within | within blocks | design-specific asymptotics |
 | Rerandomization (Morgan and Rubin 2012) | Mahalanobis below a threshold | large | non-normal limit (Li, Ding and Rubin 2018); power (Branson, Li and Ding 2024) |
-| Cluster rerandomization (Lu, Liu, Liu and Ding 2023) | arm balance over given clusters | restricted cluster assignments | design-based |
+| Cluster rerandomization (Lu, Liu, Liu and Ding 2023) | arm balance over given clusters | restricted cluster assignments | asymptotic, needs a few dozen clusters; Fisher test for fewer |
 | FSM (Morris 1979; Chattopadhyay, Morris and Zubizarreta 2026) | D-optimal sequential selection | random turn order; few partitions at small `N` with many covariates | randomization test |
 | Gram-Schmidt Walk (Harshaw et al. 2024) | tunable | tunable, with a worst-case bound | design-based |
+| Optimized partition, arms randomized (Bertsimas, Johnson and Kallus 2015) | means and second moments, cross-products included, by integer programming | one partition | bootstrap |
 | Optimal designs (Kallus 2018, 2020) | minimax under an outcome class | mixed strategies, optionally constrained for Fisher's test | design-based |
-| Nearly random designs (Krieger, Azriel and Kapelner 2019) | exchange optimization from random starts | measured, not bounded | randomization test |
-| Anticlustering for assignment (Papenberg and Angelike 2026) | best of the methods they compared | a random start and one exchange pass | t-test and OLS; a matching randomization test left to future work |
+| Greedy pair-switching (Krieger, Azriel and Kapelner 2019) | exchange to a local optimum from a random start; imbalance `O_p(n^{-(1+2/p)})` | close to complete randomization by pairwise entropy | randomization test over replicate designs |
+| Matching, then greedy switching across pairs (Krieger, Azriel and Kapelner, arXiv:2012.03330) | pairs for nonlinear outcomes, plus mean balance | as random as matched pairs | randomization test |
+| Tail-criterion rerandomization (Kapelner et al. 2021; arXiv:1905.03337) | threshold chosen by a quantile of MSE over unobserved covariates | tuned by that criterion | randomization test |
+| Anticlustering for assignment (Papenberg and Angelike 2026) | best of the methods they compared | a random start and one exchange pass | t-test and OLS; a randomization test listed as future work |
 | Assignment-based anticlustering, ABA (Baumann et al. 2026) | near-perfect on means; scales to millions | none (deterministic) | not designed for it |
 
 The closest work is Kallus's.
@@ -61,10 +72,24 @@ The closest work is Kallus's.
   probability `alpha / 2`, which keeps Fisher's test usable. He computes it with
   repeated mixed-integer programs and an `N x N` semidefinite program.
 
-`G(K)` sits in the same constrained class. Its covariance is closed form and it
-needs no solver, but how close it comes to the constrained optimum is
-unknown. The specific construction, many anticlusters randomized whole, was not
-found in the literature searched, which does not establish that it is new.
+- **Kapelner, Krieger and coauthors** settle much of the rest.
+  - Greedy pair-switching is the two-group exchange algorithm, and they
+    already test it by redrawing the design (Krieger et al. 2019). So a
+    randomization test for exchange anticlustering, which Papenberg and
+    Angelike list as future work, exists.
+  - Their pairwise-entropy measure of randomness is the pair check used in
+    section 3.
+  - Their tail criterion (Kapelner et al. 2021) penalizes `||Sigma||_F^2`,
+    which favours designs between complete randomization and a single
+    optimal partition.
+
+`G(K)` sits in Kallus's constrained class. With `K` equal to the number of arms
+it is Bertsimas, Johnson and Kallus's design. Its covariance is closed form and
+it needs no solver. That makes Kapelner et al.'s criterion a one-dimensional
+problem in `K` rather than something estimated by sampling. How close `G(K)`
+comes to Kallus's constrained optimum is unknown. The specific construction,
+many anticlusters randomized whole, was not found in the literature read, which
+does not establish that it is new.
 
 ## 3. How anticlustering balances, and how to randomize it
 
@@ -103,19 +128,20 @@ The pilot used `sigma = 1` and centroid distance. Its code is
 What the ablation shows, and what it does not:
 
 1. **Jittering the sort order left balance unchanged** and made pair
-   co-membership look random. Neither the probability mass on each partition
-   nor the assignment covariance was measured. Those, not the pair rate,
-   decide robustness and testability.
+   co-membership look random. Pair co-membership is Krieger et al.'s (2019)
+   pairwise-entropy measure. Neither the probability mass on each partition
+   nor the assignment covariance (its `lambda_max` or Frobenius norm) was
+   measured. Those decide robustness and testability.
 2. **Shuffling labels at the end is mandatory.** Without it, jitter left some
    units in group 0 in 83% of draws. The pairs check could not see this,
    because it ignores labels.
 3. **Balancing means can unbalance spread.** Two fixes exist. The k-plus
    criterion (Papenberg 2024) appends each covariate's squared and higher
    deviations, which balances marginal variances but not covariances.
-   Balancing squares and cross-products together is, as Kallus (2018) describes
-   it, the design of Bertsimas
-   et al. (2015) and Kallus's (2018) quadratic-kernel allocation. Either works
-   only while the feature count stays well below `N`.
+   Balancing squares and cross-products together is the design of Bertsimas,
+   Johnson and Kallus (2015), whose multivariate formulation includes the
+   cross-moments, and Kallus's (2018) quadratic-kernel allocation. Either
+   works only while the feature count stays well below `N`.
 
 ## 4. Theory
 
@@ -131,7 +157,10 @@ the `+/-1` assignment vector; `Sigma = E[WW']`.
    `(N-1)/(N-p-1)`. In the worst direction it is `lambda_max`, up to `N`.
 3. **A regression benchmark.** In a linear model with a constant effect and
    homoskedastic errors, OLS has `MSE = 4 sigma^2 E[1/(N-Q)]`, where `Q = W'P_X W`
-   measures treatment-covariate collinearity. Exact balance gains *at least*
+   measures treatment-covariate collinearity. The pieces are known: Kapelner
+   et al. (arXiv:1905.03337, eq. 6) give the design-averaged form to third
+   order, and the Gaussian value is a classical inverse-Beta moment. Exact
+   balance gains *at least*
    `(N-1)/(N-1-p)` over complete randomization with OLS, and exactly
    `(N-3)/(N-p-3)` with Gaussian covariates. That gain is 6% with one
    covariate at `N = 20`, consistent with Papenberg and Angelike's null. It is
@@ -147,17 +176,21 @@ the `+/-1` assignment vector; `Sigma = E[WW']`.
 5. **Inference.** The t-test is conservative when the design reduces the true
    variance, which is the intended case but is not guaranteed. A
    randomization test that redraws the design controls level for the sharp
-   null. The weak null needs a studentized statistic. A design uniform over
-   `M` partitions can reach p-values no smaller than `1/M`.
+   null (Morgan and Rubin 2012; Krieger et al. 2019). The weak null needs a
+   studentized statistic. A design uniform over `M` partitions can reach
+   p-values no smaller than `1/M` (Kallus 2020, Section 7).
 6. **Grouped randomization `G(K)`**, conditional on the partition:
    - Every unit has probability 1/2.
    - The worst case is `(N-1)/(K-1)` times complete randomization.
+   - `||Sigma||_F^2 = N^2/(K-1)`, the randomness term of Kapelner et al.'s
+     criterion.
    - The smallest p-value is `2/C(K, K/2)`.
    - Expected imbalance is `E[Q] = (K m^2/(K-1)) trace(A^{-1} D'D)`, with `D` the
      group-mean deviations.
    - The group-level Neyman variance is conservative in expectation. A
      `t_{K-2}` reference is only an approximation: with `K = 8`, one null
-     configuration rejects 14% of the time at a nominal 5%.
+     configuration rejects 14% of the time at a nominal 5%. Lu et al.'s
+     simulations suggest normal-based intervals need a few dozen groups.
 
 ## 5. Evidence
 
@@ -193,17 +226,28 @@ The t-test against the randomization test, under exchange anticlustering with
 
 ## 6. What has to be shown next
 
-`G(K)` is a proposal, not a recommendation, until two things are done.
+`G(K)` is a proposal, not a recommendation, until three things are done.
 
 1. **A balance theorem for small groups.** Bound the partition's group-mean
    deviation `D` as a function of `N`, `K` and `p` for a specific
-   anticlustering algorithm. Through `E[Q]` above, that becomes a risk bound
-   at a fixed worst case `C`.
-2. **A comparison at matched robustness.**
+   anticlustering algorithm. For two groups the analogues exist: exponential
+   for the optimum (Bertsimas et al. 2015) and `O_p(n^{-(1+2/p)})` for greedy
+   switching (Krieger et al. 2019). Through `E[Q]` above, a `K`-group bound
+   becomes a risk bound at a fixed worst case `C`.
+2. **Choosing `K`.** Minimize Kapelner et al.'s tail criterion over `K`, using
+   the closed-form `E[Q]` and `||Sigma||_F^2`. Check the choice against their
+   sampled threshold for rerandomization on the same data.
+3. **A comparison at matched robustness.**
    - Sweep `K`.
-   - Compare `G(K)` against rerandomization, matched tuples, the Gram-Schmidt
-     Walk and complete randomization with good adjustment. The adjustment
-     should include the same nonlinear features the design is given.
+   - Compare `G(K)` against:
+     - tail-criterion rerandomization;
+     - greedy pair-switching and its matched-pairs hybrid;
+     - matched tuples;
+     - the Gram-Schmidt Walk;
+     - complete randomization with good adjustment, which should include the
+       same nonlinear features the design is given.
+   - At small `N`, also compare against Kallus's inference-constrained
+     design, where his solver runs.
    - Report MSE, power, interval coverage and length, and sharp-null and
      weak-null rejection rates separately.
    - Include heterogeneous effects and heteroskedasticity, plus outcome

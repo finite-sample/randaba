@@ -53,7 +53,9 @@ assignments to exist), then `MSE = (4/N^2) r' Sigma r`.
 - The *worst* direction gives `(4/N^2) |r|^2 lambda_max`, the largest
   eigenvalue of `Sigma` on that space. Only `lambda_max <= N` bounds it, so a
   single partition can be up to `N - 1` times worse than complete
-  randomization (Kallus 2020).
+  randomization (Kallus 2018, Theorem 1; Kallus 2020). This is Efron's (1971)
+  accidental-bias bound `z' Sigma z <= lambda_max |z|^2`, as Kapelner et al.
+  (2021) use it.
 
 *Proof.* The projection `P` onto `span(1, X_c)` satisfies `P W = 0`, so
 `Sigma P = 0` and the trace of `Sigma` on the complement is all of `N`.
@@ -82,6 +84,14 @@ The mechanism is collinearity between treatment and the covariates: `Q / N` is
 the share of the treatment vector that the covariates explain, and OLS
 discards it.
 
+None of this is new. The conditional variance is the textbook OLS formula, and
+Krieger, Azriel and Kapelner (2019, Section 2.3) write it in terms of the
+Mahalanobis imbalance. Kapelner, Krieger, Sklar and Azriel (arXiv:1905.03337,
+eq. 6) average it over a design to third order:
+`sigma^2/n + (sigma^2/n^2) trace(X_perp' Sigma X_perp)`, where `X_perp` is the
+orthogonalized covariate matrix. That depends on the design only through
+`E[Q] = trace(P Sigma)`. The corollaries below put these pieces in exact form.
+
 **Corollary 2a (lower bound, any fixed `X`).** Under complete randomization
 `E[Q | X] = p N / (N - 1)`. By Jensen's inequality, the gain of an exactly
 balanced design over complete randomization analysed by OLS is
@@ -106,7 +116,9 @@ randomization, `Q / N ~ Beta(p/2, (N - 1 - p)/2)`. For `N > p + 3`,
 N E_{X, CRD}[ 1 / (N - Q) ]  =  (N - 3) / (N - p - 3).
 ```
 
-The expectation is infinite when `N <= p + 3`.
+The expectation is infinite when `N <= p + 3`. This is the classical
+inverse-Beta (equivalently inverse-Wishart) moment for regression on Gaussian
+regressors, applied to the treatment column.
 
 **Scope.** Exact balance is generally unattainable with continuous
 covariates, so `4 sigma^2 / N` is an ideal that real designs approach. The
@@ -206,6 +218,12 @@ Three qualifications apply.
 
 For anticlustering, the shell draft and the FSM, a randomization test that
 redraws the design controls level in finite samples for the **sharp** null.
+This is the standard recipe (Morgan and Rubin 2012, Section 2.2). Krieger,
+Azriel and Kapelner (2019, Section 5.2) already apply it to greedy
+pair-switching. That is the two-group exchange algorithm run to a local
+optimum, the same family as `anticlust`'s exchange method. So a randomization
+test for exchange anticlustering is not new, although Papenberg and Angelike
+(2026) list it as future work.
 Discreteness and ties can hold its rejection rate well below `alpha`. It does
 not test the weak null of zero average effect. The statistics used here (the
 unstudentized difference in means and OLS coefficient) need extra
@@ -241,10 +259,20 @@ distribution over them would be needed to show it is the cause.
 
 The partition depends on `X` alone, and everything below conditions on it.
 Once the partition is fixed, step 2 is ordinary equal-size cluster
-randomization. What is new is constructing clusters that are diverse within and
-alike between before randomizing them. Cluster rerandomization (Lu, Liu, Liu
-and Ding 2023) instead takes clusters as given and restricts which assignments
-are allowed.
+randomization. What may be new is constructing many clusters that are diverse
+within and alike between, then randomizing them. Its neighbours:
+
+- **`K` equal to the number of arms** is the design of Bertsimas, Johnson and
+  Kallus (2015). It builds one optimal partition by mixed-integer programming
+  and randomizes which group gets which treatment. That is a single partition,
+  so they test with a bootstrap, not a randomization test.
+- **Cluster rerandomization** (Lu, Liu, Liu and Ding 2023) takes natural
+  clusters as given and discards cluster assignments with poor covariate
+  balance. Its theory needs many clusters. In their simulations, normal-based
+  intervals were valid from about 24 clusters with one covariate and needed
+  more than 44 with five (their Appendix A). Constrained randomization of
+  group-randomized trials (Moulton 2004) is the same idea, as Lu et al.
+  describe it. Moulton's paper itself was not obtained.
 
 In Kallus's (2018, 2020) framework, an outcome class given by a kernel matrix
 `K_ker` gives a design the worst-case risk `lambda_max(K_ker^{1/2} Sigma K_ker^{1/2})`.
@@ -274,7 +302,12 @@ of group labels and `W = G s`.
    worst-case variance relative to complete randomization is
    `(N - 1) / (K - 1)`. Over directions orthogonal to `X` this is an upper
    bound, attained if some group contrast is orthogonal to `X`. The isotropic
-   average equals complete randomization, because the trace is still `N`.
+   average equals complete randomization, because the trace is still `N`. The
+   squared Frobenius norm is `||Sigma||_F^2 = N^2 / (K - 1)`. That runs from
+   about `N` under complete randomization to `N^2` for a single partition.
+   It is the randomness term in the tail criterion of Kapelner et al. (2021;
+   arXiv:1905.03337), which those authors must estimate from tens of
+   thousands of sampled assignments.
 3. *Resolution.* There are `C(K, K/2) / 2` equally likely partitions, so the
    randomization p-value is at least `2 / C(K, K/2)`. That is 0.029 at `K = 8`,
    0.008 at `K = 10` and about 1e-5 at `K = 20`. Rejection at 5% needs
@@ -287,8 +320,15 @@ of group labels and `W = G s`.
    ```
 
    Expected treatment imbalance is the partition's own between-group
-   imbalance, scaled. `K` does not determine it by itself. How fast an
-   anticlustering algorithm can shrink `D` as `m` falls is open.
+   imbalance, scaled. `K` does not determine it by itself. For two groups the
+   rates are known:
+   - The optimal partition's imbalance is exponentially small in `N`
+     (Bertsimas et al. 2015; Kallus 2018, Section 3.3, a heuristic
+     argument).
+   - Greedy pair-switching from a random start reaches
+     `O_p(n^{-(1 + 2/p)})` (Krieger et al. 2019).
+
+   For `K` groups of size `m` built by exchange or ABA, the rate is open.
 5. *Variance estimation.* Conditional on the partition, the group mean
    potential outcomes `Ybar_g(t)` are fixed numbers, and with equal groups the
    unit-level difference in means equals the difference in group means. So
@@ -305,8 +345,10 @@ of group labels and `W = G s`.
    effect and group outcomes `(1,1,1,0,0,0,0,0)`, the pooled t-test rejects at
    5% on 10 of the 70 assignments (14%). Normal or `t` references need a
    group-level central limit theorem, meaning many groups and none dominant.
-   For few groups, use the randomization test, which is valid for the sharp
-   null.
+   Lu et al.'s simulations suggest that means a few dozen groups. With that
+   many, their Theorem 6 also covers regression adjustment on group-level
+   covariates with robust standard errors (Su and Ding 2021). For few groups,
+   use the randomization test, which is valid for the sharp null.
 
 *Proof of 2.* `E[s s'] = (K / (K - 1)) (I - 11'/K)`, and because `G'G = m I`,
 `G (I - 11'/K) G'` has eigenvalue `m` on the group contrasts.
@@ -326,6 +368,20 @@ complete randomization. Keeping the worst case within a factor `C` needs
 so `K` must grow in proportion to `N`, and groups stay small. At `N = 300` and
 `K = 8` the worst case is 42.7. The open question is whether anticlustering
 still makes `D` small when `m` is held to `C` or so units.
+
+The worst case is Efron's criterion, and it always picks complete
+randomization. Kapelner et al. (2021) argue for a quantile of the MSE over
+unobserved covariates instead. For OLS (arXiv:1905.03337, eq. 13) its
+design-dependent part is approximately
+
+```text
+trace(X_perp' Sigma X_perp)  +  c (2 ||(I - P) Sigma||_F^2 + ...)^{1/2}.
+```
+
+Under `G(K)` the first term is `E[Q]` from item 4. The second is at most
+`N^2 / (K - 1)` from item 2. So `K` can be chosen by minimizing a
+one-dimensional criterion in near closed form, where Kapelner et al. tune a
+rerandomization threshold by sampling. Doing this is proposed, not done.
 
 ## Predictions against the pilot
 
@@ -377,6 +433,11 @@ anticlustering, `p = 5` (the Proposition 4 illustration):
 4. Balance is paid for in randomness: label symmetry for unbiasedness, enough
    probability spread (at least `1 / alpha` partitions for a uniform design)
    for a test to reject, and a bounded `lambda_max` for robustness.
-5. Under `G(K)` all three are explicit given the partition. The worst case
-   forces `K` to grow with `N`, which puts the burden on balancing small
+5. Under `G(K)` all three are explicit given the partition, and so is the
+   Frobenius randomness term of Kapelner et al.'s tail criterion. The worst
+   case forces `K` to grow with `N`, which puts the burden on balancing small
    groups.
+
+Items 1 to 4 are known, mostly from Kallus (2018, 2020), Kapelner et al.
+(2021), Krieger et al. (2019) and Li, Ding and Rubin (2018). They are stated
+here so that `G(K)` can be judged against them.
