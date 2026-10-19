@@ -13,8 +13,8 @@ The pilot asks two things.
 
 1. Does randomization inference (RI) that redraws the actual design recover the
    power the t-test leaves on the table, at exact size?
-2. Is there a realistic setting where a balanced design, analysed well, beats
-   complete randomization analysed with regression by a meaningful margin?
+2. Is there a realistic setting where a balanced design, analyzed well, beats
+   complete randomization analyzed with regression by a meaningful margin?
 
 ## Designs (two equal groups)
 
@@ -24,7 +24,7 @@ The pilot asks two things.
 | Exchange anticlustering | Random equal split, then one pass of the `anticlust` exchange method on the k-means (variance) objective, as in Papenberg and Angelike |
 | Rerandomization | Draw CRD splits until the Mahalanobis distance between group means falls below its 0.1% quantile (Morgan and Rubin 2012) |
 | FSM | `finite_selection.fsm` with a SCOMARS order |
-| Shell draft | Whiten covariates, sort units by squared distance from the centre after multiplying by `exp(N(0,1))` (jitter 1), cut into shells of 2, assign each shell by the optimal matching on centroid distance, shuffle the two labels |
+| Shell draft | Whiten covariates, sort units by squared distance from the center after multiplying by `exp(N(0,1))` (jitter 1), cut into shells of 2, assign each shell by the optimal matching on centroid distance, shuffle the two labels |
 
 ## Data-generating processes
 
@@ -64,7 +64,7 @@ serves every outcome model and both statistics.
 - **Question 1** is answered yes if RI on the difference in means has size 0.05
   and more power than the t-test under the balanced designs.
 - **Question 2** is answered yes if some cell gives a balanced design an effective
-  sample size at least 10% above CRD with OLS, both analysed with their best
+  sample size at least 10% above CRD with OLS, both analyzed with their best
   valid test.
 
 ## Out of scope for the pilot
@@ -75,8 +75,8 @@ and closed-form standard errors for shell designs.
 ## Results (400 datasets per cell, 200 reference draws)
 
 Reproduce with `uv run python scripts/pilot.py` then `scripts/headline.py`.
-Power is at `tau = 1.96 sqrt(8/N)`. ESS is the MSE of CRD analysed by OLS
-divided by the MSE of the design analysed by OLS; with 400 datasets it carries
+Power is at `tau = 1.96 sqrt(8/N)`. ESS is the MSE of CRD analyzed by OLS
+divided by the MSE of the design analyzed by OLS; with 400 datasets it carries
 roughly ±0.1 to 0.15 of simulation noise.
 
 ```text

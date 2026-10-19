@@ -42,7 +42,7 @@ Shuffling labels at the end of any procedure makes it symmetric, which is why
 the shell draft does it.
 
 **Corollary (the price of balance).** Write `mu = c 1 + X_c beta + r`, with
-`X_c` the centred covariates of rank `p` and `r` orthogonal to `1` and `X_c`.
+`X_c` the centered covariates of rank `p` and `r` orthogonal to `1` and `X_c`.
 If a design balances exactly (`X_c' W = 0` always, which requires such
 assignments to exist), then `MSE = (4/N^2) r' Sigma r`.
 
@@ -96,7 +96,7 @@ orthogonalized covariate matrix. That depends on the design only through
 
 **Corollary 2a (lower bound, any fixed `X`).** Under complete randomization
 `E[Q | X] = p N / (N - 1)`. By Jensen's inequality, the gain of an exactly
-balanced design over complete randomization analysed by OLS is
+balanced design over complete randomization analyzed by OLS is
 
 ```text
 N E_CRD[ 1 / (N - Q) | X ]  >=  (N - 1) / (N - 1 - p).
@@ -110,7 +110,7 @@ balanced assignment exists, and enumerating all 70 assignments gives a gain of
 large.
 
 **Corollary 2b (exact, Gaussian covariates).** If the rows of `X` are
-independent `N(0, I_p)`, the centred covariate space is a uniformly oriented
+independent `N(0, I_p)`, the centered covariate space is a uniformly oriented
 `p`-dimensional subspace of `1-perp`, so averaging over `X` and complete
 randomization, `Q / N ~ Beta(p/2, (N - 1 - p)/2)`. For `N > p + 3`,
 
@@ -262,7 +262,7 @@ distribution over them would be needed to show it is the cause.
 The partition depends on `X` alone, and everything below conditions on it.
 Once the partition is fixed, step 2 is ordinary equal-size cluster
 randomization. What may be new is constructing many clusters that are diverse
-within and alike between, then randomizing them. Its neighbours:
+within and alike between, then randomizing them. Its neighbors:
 
 - **`K` equal to the number of arms** is the design of Bertsimas, Johnson and
   Kallus (2015). It builds one optimal partition by mixed-integer programming
@@ -300,7 +300,7 @@ of group labels and `W = G s`.
    unbiased under arbitrary effects.
 2. *Spread.* `Sigma = (K / (K - 1)) G (I - 11'/K) G'`. Its `K - 1` nonzero
    eigenvalues all equal `N / (K - 1)`, on the group contrasts, and it is zero
-   on within-group directions. Over all centred outcome directions, the
+   on within-group directions. Over all centered outcome directions, the
    worst-case variance relative to complete randomization is
    `(N - 1) / (K - 1)`. Over directions orthogonal to `X` this is an upper
    bound, attained if some group contrast is orthogonal to `X`. The isotropic
@@ -522,7 +522,7 @@ for complete randomization. At `N = 120`:
   `K = 60` (pairs).
 
 Choosing `K` is minimizing the first closed form, with `E[Q]` from
-Proposition 7. The answer favours many small groups, and only when `p/N` is
+Proposition 7. The answer favors many small groups, and only when `p/N` is
 large.
 
 ![Tail criterion against K](_static/gk_tail.png)

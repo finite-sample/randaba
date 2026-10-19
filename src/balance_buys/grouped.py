@@ -187,9 +187,9 @@ def relative_mse(g: np.ndarray, groups: np.ndarray) -> float:
     """
     g = np.asarray(g, dtype=float)
     n = len(g)
-    centred = g - g.mean()
-    num = centred @ covariance(groups) @ centred
-    den = n / (n - 1) * centred @ centred
+    centered = g - g.mean()
+    num = centered @ covariance(groups) @ centered
+    den = n / (n - 1) * centered @ centered
     return float(num / den)
 
 

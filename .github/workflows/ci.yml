@@ -25,3 +25,5 @@ jobs:
       wheel-import: balance_buys
       coverage-floor: 0
       run-preen: true
+      # This private repository has no GitHub Code Security entitlement.
+      run-dependency-review: false

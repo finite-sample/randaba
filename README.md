@@ -1,7 +1,7 @@
 # balance_buys
 
-[![CI](https://github.com/finite-sample/balance_buys/actions/workflows/ci.yml/badge.svg)](https://github.com/finite-sample/balance_buys/actions/workflows/ci.yml)
-[![Docs](https://github.com/finite-sample/balance_buys/actions/workflows/docs.yml/badge.svg)](https://finite-sample.github.io/balance_buys/)
+[![CI](https://github.com/finite-sample/randaba/actions/workflows/ci.yml/badge.svg)](https://github.com/finite-sample/randaba/actions/workflows/ci.yml)
+[![Docs](https://github.com/finite-sample/randaba/actions/workflows/docs.yml/badge.svg)](https://github.com/finite-sample/randaba/tree/main/docs)
 
 What covariate balancing at assignment buys over regression adjustment in a
 randomized experiment, and what it costs. This repository holds the designs,
@@ -10,7 +10,7 @@ note in `paper/`.
 
 ## Findings
 
-- **What balance buys.** Exact balance beats complete randomization analysed
+- **What balance buys.** Exact balance beats complete randomization analyzed
   by OLS by a degrees-of-freedom factor, `(N-3)/(N-p-3)` with Gaussian
   covariates. That is under 5% with a handful of covariates, and 20 to 35% at
   17 to 25 covariates per 100 units.
@@ -28,7 +28,7 @@ note in `paper/`.
 ## Installation
 
 ```bash
-pip install git+https://github.com/finite-sample/balance_buys
+pip install git+https://github.com/finite-sample/randaba
 ```
 
 The simulations need extra packages: `uv sync --group sims`.

@@ -1,4 +1,4 @@
-"""Headline pilot tables: CRD + OLS against each design analysed with its own RI."""
+"""Headline pilot tables: CRD + OLS against each design analyzed with its own RI."""
 
 import pandas as pd
 from summarize import ess, load, rates
@@ -22,7 +22,7 @@ if __name__ == "__main__":
     out = pd.DataFrame(rows).set_index(["N", "p", "dgp"])
     pd.set_option("display.width", 220)
     print("POWER: CRD with OLS vs each design with RI on the OLS coefficient")
-    print("ESS: MSE of CRD+OLS / MSE of design+OLS (above 1 favours the design)\n")
+    print("ESS: MSE of CRD+OLS / MSE of design+OLS (above 1 favors the design)\n")
     print(out.round(2).to_string())
     worst = size[["RI diff", "RI OLS"]].stack()
     print(f"\nRI size across all cells: {worst.min():.3f} to {worst.max():.3f}")

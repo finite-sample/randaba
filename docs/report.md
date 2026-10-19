@@ -4,11 +4,11 @@
 
 Experimenters increasingly assign treatment with algorithms that make the arms
 look alike on baseline covariates, such as rerandomization, matching and
-anticlustering, and then analyse the data with regression. Simulation studies
+anticlustering, and then analyze the data with regression. Simulation studies
 find that regression recovers most of what such balancing buys. That leaves
 practitioners with three unanswered questions: when balancing still pays, what
 it costs in protection against unmeasured covariates, and how to keep inference
-exact. We answer them for two-arm experiments analysed by ordinary least
+exact. We answer them for two-arm experiments analyzed by ordinary least
 squares (OLS).
 
 - **What balance buys.** Exact balance beats complete randomization with OLS by
@@ -111,7 +111,7 @@ The closest work is Kallus's.
   - Their pairwise-entropy measure of randomness is the pair check used in
     section 3.
   - Their tail criterion (Kapelner et al. 2021) penalizes `||Sigma||_F^2`,
-    which favours designs between complete randomization and a single
+    which favors designs between complete randomization and a single
     optimal partition.
 
 `G(K)` sits in Kallus's constrained class. With `K` equal to the number of arms
@@ -124,7 +124,7 @@ does not establish that it is new.
 
 ## 3. How anticlustering balances, and how to randomize it
 
-ABA sorts units by distance from the centre and deals them out in shells of
+ABA sorts units by distance from the center and deals them out in shells of
 `K`. Each shell goes one unit per group, by the matching that maximizes total
 squared distance to the groups' current centroids. Expanding that objective
 shows the matching minimizes `sum x_i . c_k`: each group receives the unit
@@ -147,7 +147,7 @@ An ablation on 20,000 units, 8 covariates and 200 groups:
 The **shell draft** is ABA made random:
 
 1. Whiten the covariates.
-2. Sort units by distance from the centre times `exp(sigma Z)`, with `Z`
+2. Sort units by distance from the center times `exp(sigma Z)`, with `Z`
    standard normal (the jitter).
 3. Cut the sorted list into shells of `K`.
 4. Deal each shell by ABA's matching.
@@ -240,7 +240,7 @@ the `+/-1` assignment vector; `Sigma = E[WW']`.
      two-group rate, since a group can swap with every unit outside it. Over
      `N` from 240 to 960 and `p` from 1 to 10, the fitted exponents were
      within 0.05 of the prediction for `m` and within 0.12 for `N`.
-8. **The tail criterion under `G(K)`.** With unobserved covariates modelled as
+8. **The tail criterion under `G(K)`.** With unobserved covariates modeled as
    independent normal `z`, the OLS MSE over `z` is a weighted sum of `chi2_1`
    variables.
    - Under `G(K)` the weights come from a `K x K` matrix and are exact given
@@ -267,7 +267,7 @@ The pilot ([details](pilot.md)) ran 400 datasets per cell with two arms and
 200 reference draws per dataset. It compared complete randomization,
 rerandomization, exchange anticlustering, the shell draft and the FSM. It did
 not run `G(K)`. Gains are effective sample size relative to complete
-randomization analysed with OLS, and carry about ±0.1 to 0.15 of simulation
+randomization analyzed with OLS, and carry about ±0.1 to 0.15 of simulation
 noise.
 
 | N | p | Exact balance (Gaussian `X`) | Rerandomization | Exchange anticlustering | Shell draft |
@@ -320,7 +320,7 @@ a brute-force quantile over 40,000 draws of `z` within 0.5%.
 
 - `N = 120` and `p` in {5, 20, 30}, with 20 covariate draws each.
 - 4,000 assignments per design and draw.
-- Every design analysed by OLS on `(1, T, X)`.
+- Every design analyzed by OLS on `(1, T, X)`.
 
 **Metrics.**
 

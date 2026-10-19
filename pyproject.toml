@@ -17,9 +17,9 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/finite-sample/balance_buys"
-Documentation = "https://finite-sample.github.io/balance_buys/"
-Repository = "https://github.com/finite-sample/balance_buys"
+Homepage = "https://github.com/finite-sample/randaba"
+Documentation = "https://github.com/finite-sample/randaba/tree/main/docs"
+Repository = "https://github.com/finite-sample/randaba"
 
 [build-system]
 requires = ["uv_build>=0.12.5,<0.13"]
