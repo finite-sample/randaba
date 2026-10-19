@@ -17,5 +17,7 @@ jobs:
     uses: gojiplus/py-canon/.github/workflows/reusable-docs.yml@v1
     permissions:
       contents: read
+      pages: write
+      id-token: write
     with:
       deploy: false
