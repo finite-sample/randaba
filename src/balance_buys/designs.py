@@ -21,7 +21,7 @@ def _check(x: np.ndarray, k: int) -> np.ndarray:
 
 
 def whiten(x: np.ndarray) -> np.ndarray:
-    """Centre the covariates and rotate them to identity sample covariance.
+    """Center the covariates and rotate them to identity sample covariance.
 
     Euclidean distance on the result is Mahalanobis distance on ``x``.
 
@@ -37,12 +37,12 @@ def whiten(x: np.ndarray) -> np.ndarray:
     x = np.asarray(x, dtype=float)
     if x.ndim == 1:
         x = x[:, None]
-    centred = x - x.mean(axis=0)
+    centered = x - x.mean(axis=0)
     try:
-        chol = np.linalg.cholesky(np.atleast_2d(np.cov(centred, rowvar=False)))
+        chol = np.linalg.cholesky(np.atleast_2d(np.cov(centered, rowvar=False)))
     except np.linalg.LinAlgError as err:
         raise ValueError("covariates are collinear; drop or combine columns") from err
-    return np.linalg.solve(chol, centred.T).T
+    return np.linalg.solve(chol, centered.T).T
 
 
 def crd(n: int, k: int, rng: np.random.Generator) -> np.ndarray:
@@ -75,7 +75,7 @@ def shell_draft(
 ) -> np.ndarray:
     """Randomized shell anticlustering into ``k`` equal groups.
 
-    Units are whitened, sorted by squared distance from the centre after
+    Units are whitened, sorted by squared distance from the center after
     multiplying it by ``exp(jitter * N(0, 1))``, and cut into shells of ``k``.
     Each shell goes one unit per group by the matching that maximizes the total
     cost. With ``cost="centroid"`` the cost is the squared distance from a unit

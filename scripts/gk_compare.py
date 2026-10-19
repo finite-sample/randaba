@@ -1,7 +1,7 @@
 """Compare G(K) with other balancing designs where it can win: many covariates.
 
 N = 120 and p in {5, 20, 30}; 20 covariate draws per p. Every design is
-analysed by OLS on (1, T, X). For each covariate draw and design, 4000
+analyzed by OLS on (1, T, X). For each covariate draw and design, 4000
 assignments are drawn and reused for every metric:
 
 - MSE over unobserved z ~ N(0, I): mean and 95% quantile, relative to 4/N

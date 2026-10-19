@@ -28,7 +28,7 @@ def rates(d: pd.DataFrame, null: bool) -> pd.DataFrame:
 
 
 def ess(d: pd.DataFrame) -> pd.DataFrame:
-    """MSE of CRD analysed with OLS, divided by each design-estimator MSE."""
+    """MSE of CRD analyzed with OLS, divided by each design-estimator MSE."""
     sub = d[d.tau > 0].copy()
     sub["se_dm"] = (sub.est_dm - sub.tau) ** 2
     sub["se_ols"] = (sub.est_ols - sub.tau) ** 2
@@ -59,5 +59,5 @@ if __name__ == "__main__":
     print(rates(d, null=True).round(3).to_string())
     print("\nPOWER (tau = 1.96 sqrt(8/N))")
     print(rates(d, null=False).round(3).to_string())
-    print("\nEFFECTIVE SAMPLE SIZE relative to CRD analysed with OLS (>1 is better)")
+    print("\nEFFECTIVE SAMPLE SIZE relative to CRD analyzed with OLS (>1 is better)")
     print(ess(d).round(2).to_string())

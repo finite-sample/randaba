@@ -13,4 +13,4 @@ that version.
 
 - Initial package scaffolding.
 
-[Unreleased]: https://github.com/finite-sample/balance_buys/commits/main
+[Unreleased]: https://github.com/finite-sample/randaba/commits/main

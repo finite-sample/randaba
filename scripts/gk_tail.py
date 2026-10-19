@@ -102,7 +102,7 @@ if __name__ == "__main__":
         g = tab.loc[(p, "G(K)+OLS")]
         c = tab.loc[(p, "CRD+OLS")].iloc[0]
         ax.plot(g.index, g.q95, "o-", label="G(K)+OLS, 95% quantile")
-        ax.plot(g.index, g["q95 closed form"], "--", color="grey", label="closed form")
+        ax.plot(g.index, g["q95 closed form"], "--", color="gray", label="closed form")
         ax.plot(g.index, g["mean"], "s-", label="G(K)+OLS, mean")
         ax.axhline(c.q95, color="C3", label="CRD+OLS, 95% quantile")
         ax.axhline(c["mean"], color="C3", ls=":", label="CRD+OLS, mean")
