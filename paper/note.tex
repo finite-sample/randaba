@@ -1,0 +1,393 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{etoolbox}
+\AtBeginEnvironment{table}{\small}
+\usepackage{graphicx}
+\usepackage[authoryear,round]{natbib}
+\usepackage[hidelinks]{hyperref}
+
+\newtheorem{proposition}{Proposition}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+
+\newcommand{\E}{\mathbb{E}}
+
+\title{Randomized Assignment-Based Anticlustering\\for Experiments with Many Arms}
+\author{Gaurav Sood}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Experiments with many arms suffer more chance imbalance on baseline
+covariates, and the designs that remove it were built for two or a few
+arms. Assignment-based anticlustering (ABA) splits units into equal groups
+that are as alike as possible and scales to millions of units, but it is
+deterministic. Jittering the sort that defines its batches and shuffling the
+group labels make it a randomized design: every unit has probability $1/K$
+of each arm, contrasts are unbiased, and the randomization test that
+redraws the design is exact. We show that each ABA step is the greedy
+allocation of the multi-arm adaptive design ARMM, computed by an assignment
+problem in $O(K^3)$ rather than by scoring all $K!$ allocations; that without
+jitter the arms are matched on the Mahalanobis norm to within its range
+divided by the arm size; that the assignment pass takes linear time in the
+number of units at fixed arm and feature counts, with an additional sorting
+cost of $O(N \log N)$; and that rerandomization at a fixed acceptance rate loses
+its gain as arms are added. In simulations with 4 to 50 arms, randomized ABA
+balanced covariate means better than the evaluated blocking, rerandomization,
+ARMM, and sequential covariate-adaptive designs, by a factor that grew with
+the number of arms. Balancing
+means alone left omitted squares less balanced than complete randomization;
+run on the covariates and their squares, randomized ABA gave the smallest
+error and the most power for a nonlinear outcome in nearly every setting,
+with exact size. With two arms, local search balanced better.
+\end{abstract}
+
+\section{Introduction}
+
+Experiments increasingly compare many arms at once. A megastudy of gym
+attendance tested 54 interventions on 61{,}293 people \citep{milkman2021};
+platform experiments routinely split users across dozens of variants. Chance
+imbalance on baseline covariates grows with the number of arms: under
+complete randomization the summed squared imbalance across $K$ arms on $p$
+whitened covariates is about $(K-1)p$, so the worst pair of arms is likely to
+differ noticeably on something.
+
+The designs that remove chance imbalance were built for two arms or a few.
+Rerandomization \citep{morgan2012,li2018} draws complete randomizations until
+one passes a balance threshold; with many arms the criterion has $(K-1)p$
+degrees of freedom and, as Section~\ref{sec:theory} shows, a fixed
+acceptance rate buys less and less. Covariate-adaptive randomization assigns
+units one at a time toward the arm that most reduces imbalance
+\citep{pocock1975,hu2012}; \citet{qin2024} balance the Mahalanobis distance
+for two arms, and \citet{yang2023} extend this to $K$ arms by scoring all
+$K!$ allocations of each block of $K$ units, which stops being feasible near
+$K = 10$. \citet{zhang2023} gives a sequential procedure for any number of
+arms and any feature map, with $O(1)$ imbalance; it scores $K$ options per
+unit. Anticlustering \citep{papenberg2021,papenberg2026} splits units into
+equal groups that are as alike as possible; its exchange heuristics cost
+$O(N^2 p)$ per pass. \citet{baumann2026} introduce assignment-based
+anticlustering (ABA), which scales to millions of units and hundreds of
+thousands of groups and beats exchange heuristics on the anticlustering
+objective when groups are many. ABA is deterministic, and its authors use it
+for cross-validation folds, mini-batches and sample batching, not
+experiments.
+
+This note makes ABA a randomized design. Two changes suffice: noise in the
+sort that defines ABA's batches, so that the partition itself is random, and
+a uniform shuffle of the group labels. The result is a design in which every
+unit has probability $1/K$ of each arm, the difference in means between any
+two arms is unbiased, and the randomization test that redraws the design is
+exact. We characterize what the design balances, what it costs, and what the
+noise buys, and we compare it with complete randomization, blocking on an
+index, rerandomization, sequential covariate-adaptive randomization, exchange
+anticlustering and ARMM at 4 to 50 arms.
+
+\section{The design}\label{sec:design}
+
+Let $x_1, \dots, x_N \in \mathbb{R}^p$ be the covariates and $K$ the number
+of arms, with $N = Km$. Whiten the covariates, $w_i = L^{-1}(x_i - \bar x)$
+with $LL^\top$ the sample covariance, so that Euclidean distance on $w$ is
+Mahalanobis distance on $x$. Draw one assignment as follows.
+\begin{enumerate}
+\item Compute the sort key $s_i = \|w_i\|^2 \exp(\sigma \varepsilon_i)$ with
+  $\varepsilon_i$ independent standard normal and jitter $\sigma \ge 0$.
+\item Sort units by $s_i$, largest first, and cut the list into $m$
+  \emph{shells} of $K$ consecutive units.
+\item Give the first shell one unit per group. For each later shell, assign
+  its $K$ units one per group by the assignment that maximizes the total
+  squared distance between each unit and its group's current centroid,
+  solved exactly by the Hungarian or Jonker--Volgenant algorithm
+  \citep{jonker1987}; then update the centroids.
+\item Relabel the groups by a uniform random permutation of $\{1, \dots, K\}$.
+\end{enumerate}
+Steps 2 and 3 are ABA \citep{baumann2026}. Placing far-out units into the
+group whose centroid is farthest from them pulls every centroid toward the
+overall mean; giving each group one unit per shell matches the groups on the
+distribution of distance from the centre. With $\sigma = 0$ the partition is
+fixed and only step 4 is random. As $\sigma \to \infty$ the sort order
+becomes a uniformly random permutation; by
+Proposition~\ref{prop:step}, the design is then ARMM \citep{yang2023} with its
+biased coin set to certainty, computed by an assignment problem instead of an
+enumeration of $K!$ allocations.
+
+\section{Properties}\label{sec:theory}
+
+\begin{proposition}[Validity]\label{prop:valid}
+For any covariates and any $\sigma$, the distribution of the assignment
+$z = (z_1, \dots, z_N)$ is invariant under permutations of the arm labels.
+Hence (i) $\Pr(z_i = g) = 1/K$ for every unit and arm; (ii) for any arms $a
+\ne b$, the difference in means $\hat\tau_{ab} = m^{-1}\sum_i
+(\mathbf{1}\{z_i = a\} - \mathbf{1}\{z_i = b\}) Y_i$ is unbiased for the
+finite-population contrast $N^{-1}\sum_i \{Y_i(a) - Y_i(b)\}$; and (iii)
+under the sharp null of no effect, the randomization test that compares the
+observed statistic with its values on $D$ fresh draws of the design, with
+p-value $(1 + \#\{|T_d| \ge |T_{\mathrm{obs}}|\})/(1 + D)$, satisfies
+$\Pr(p \le \alpha) \le \alpha$.
+\end{proposition}
+
+\begin{proof}
+Write $z = \pi \circ \zeta$, where $\zeta$ is the partition from steps 1--3
+and $\pi$ is the uniform permutation of step 4, drawn independently. For any
+fixed permutation $\rho$, $\rho \circ \pi$ is again uniform and independent
+of $\zeta$, so $\rho \circ z$ has the distribution of $z$. Part (i) follows
+because $\Pr(z_i = g) = \Pr(\pi(\zeta_i) = g) = 1/K$. Every arm has exactly
+$m$ units, so $\E\,\hat\tau_{ab} = m^{-1}\sum_i \{\Pr(z_i = a) Y_i(a) -
+\Pr(z_i = b) Y_i(b)\}$, which is (ii). Under the sharp null the outcomes do
+not depend on $z$, so the observed and the $D$ reference draws are
+independent and identically distributed draws from the design, and so are
+their statistics. The rank of the observed statistic among the $1 + D$ is
+then uniform, with ties broken against rejection, which is (iii).
+\end{proof}
+
+Validity therefore needs only the label shuffle. The jitter is about power
+and robustness: with $\sigma = 0$ the design has at most $K!$ distinct
+assignments, and a pair of units either always or never shares an arm.
+
+\begin{proposition}[Each shell is assigned optimally]\label{prop:step}
+Let $S_g$ be the sum of $w_i$ over the $t \ge 1$ units already in group $g$,
+and $S'_g$ the sum after the next shell is assigned. Step 3 chooses, among
+all $K!$ one-to-one allocations of the shell to the groups, one that
+minimizes $\sum_g \|S'_g - \bar S'\|^2$, where $\bar S' = K^{-1}\sum_g S'_g$.
+This criterion is proportional to the mean over pairs of arms of the
+squared Mahalanobis distance between their sums, the criterion ARMM
+minimizes with its \texttt{mean} option.
+\end{proposition}
+
+\begin{proof}
+All groups hold $t$ units, so the centroids are $c_g = S_g/t$. If the shell's
+unit $u_g$ goes to group $g$, the step-3 objective is $\sum_g \|w_{u_g} -
+c_g\|^2 = \sum_g \|w_{u_g}\|^2 + \sum_g \|c_g\|^2 - (2/t)\sum_g \langle S_g,
+w_{u_g}\rangle$, and only the last sum depends on the allocation; step 3
+minimizes it. On the other side, $\sum_g \|S'_g\|^2 = \sum_g \|S_g\|^2 +
+\sum_g \|w_{u_g}\|^2 + 2 \sum_g \langle S_g, w_{u_g}\rangle$, and $\bar S'$
+does not depend on the allocation, so $\sum_g \|S'_g - \bar S'\|^2 = \sum_g
+\|S'_g\|^2 - K\|\bar S'\|^2$ is minimized by the same allocation. Finally,
+$\sum_{g<h}\|S'_g - S'_h\|^2 = K \sum_g \|S'_g - \bar S'\|^2$.
+\end{proof}
+
+So the $K!$ enumeration that limits ARMM to a handful of arms is
+unnecessary: the same greedy step is a linear assignment problem, solvable
+in $O(K^3)$. ARMM randomizes by taking its best allocation with probability
+$q = 0.75$ and another at random otherwise; randomized ABA always takes the
+best allocation and randomizes through the order and the labels.
+
+\begin{proposition}[Balance on the sort key]\label{prop:key}
+Let $\sigma = 0$. For any two groups $g, h$ produced by steps 1--3,
+\[
+\Bigl|\frac1m \sum_{i: \zeta_i = g} \|w_i\|^2 - \frac1m \sum_{i: \zeta_i = h}
+\|w_i\|^2\Bigr| \le \frac{\max_i \|w_i\|^2 - \min_i \|w_i\|^2}{m}.
+\]
+For $\sigma > 0$ the same bound holds with the jittered key $s_i$ in place of
+$\|w_i\|^2$.
+\end{proposition}
+
+\begin{proof}
+Each group receives exactly one unit from each shell. Let $u_t$ and $l_t$ be
+the largest and smallest key in shell $t$. The difference of the two groups'
+keys within shell $t$ is at most $u_t - l_t$, so the difference of their sums
+is at most $\sum_t (u_t - l_t)$. Shells are consecutive in the sorted order,
+so $l_t \ge u_{t+1}$, and the sum telescopes to at most $u_1 - l_m$.
+\end{proof}
+
+The key $\|w_i\|^2$ is the sum of the squared whitened covariates, so
+Proposition~\ref{prop:key} balances the arms on one quadratic summary, the
+trace of each arm's second-moment matrix, to order $1/m$. It does not balance
+the squares one by one; for that the design is run on the covariates with
+their squares appended, which Section~\ref{sec:results} evaluates.
+
+\begin{proposition}[Cost]\label{prop:cost}
+Whitening takes $O(Np^2 + p^3)$ time and sorting takes $O(N \log N)$.
+Each of the $m$ shells takes $O(K^2 p)$ to form the cost
+matrix and $O(K^3)$ to solve the assignment problem: $O(Np^2 + p^3 + N \log N +
+NK(K + p))$ in all. At fixed $K$ and $p$, the assignment pass is $O(N)$
+and a full draw is $O(N \log N)$. The implementation uses
+$O(Np + p^2 + K^2p)$ additional memory: whitened covariates, covariance
+factors, and a broadcast temporary for the pairwise distances, along with
+the sort order and group totals.
+\end{proposition}
+
+The count is immediate from the steps. Table~\ref{tab:cost} sets it against
+the other designs. Three comparisons matter. ARMM computes, with probability
+$q$, the same step as randomized ABA (Proposition~\ref{prop:step}) but by
+scoring every allocation; the R implementation also stores the $K! \times K$
+table of permutations, about $3.6 \times 10^7$ entries at $K = 10$ and $6
+\times 10^9$ at $K = 12$, so memory fails before time does. The exchange
+method is quadratic in $N$ per pass, and versions that work from a distance
+matrix also need $O(N^2)$ memory; \citet{baumann2026} report exchange
+heuristics failing to finish within two hours on a million units where ABA
+takes seconds, and a hierarchical variant of ABA that replaces $K^2$ by
+$LK^{2/L}$ for $L$ levels. The sequential procedure of \citet{zhang2023} is
+cheaper than randomized ABA in $K$, linear rather than quadratic, and, unlike
+any batch design, can assign units as they arrive while holding only the arm
+sums; randomized ABA needs every unit's covariates before it assigns any. The
+claim for randomized ABA is therefore strong balance with an $O(N)$
+assignment pass and $O(N \log N)$ total cost at fixed $K$ and $p$;
+Section~\ref{sec:results} measures the balance.
+
+\begingroup
+\setlength{\tabcolsep}{4pt}
+\input{tab_cost.tex}
+\endgroup
+
+\begin{proposition}[Rerandomization with many arms]\label{prop:rr}
+Under complete randomization into $K$ arms of $m$ units, the imbalance $B =
+\sum_g m \|\bar w_g\|^2$ is approximately $\chi^2_d$ with $d = (K-1)p$.
+Accepting only draws with $B \le a_\alpha$, the $\alpha$ quantile of
+$\chi^2_d$, leaves expected imbalance
+$v_\alpha(d)\,\E B$ with $v_\alpha(d) = \Pr(\chi^2_{d+2} \le
+a_\alpha)/\alpha$, and $v_\alpha(d) \to 1$ as $d \to \infty$ for fixed
+$\alpha$.
+\end{proposition}
+
+\begin{proof}
+The formula for $v_\alpha$ is that of \citet{morgan2012} with $d$ degrees of
+freedom. For the limit, $\chi^2_d/d \to 1$ in probability, so $a_\alpha / d
+\to 1$; conditional on $B \le a_\alpha$, $B/d$ lies below $a_\alpha/d$ and,
+since $\Pr(B \le (1-\delta)d)/\alpha \to 0$ for every $\delta > 0$, above
+$1 - \delta$ with probability tending to one.
+\end{proof}
+
+At $\alpha = 0.01$, $v$ is 0.30 at $K = 4, p = 5$ but 0.78 at $K = 50, p =
+5$ and 0.88 at $K = 50, p = 20$. Holding balance fixed instead drives the
+acceptance rate to zero exponentially in $d$ \citep{qin2024}.
+
+\section{Comparison}\label{sec:results}
+
+\paragraph{Setup.} We compare designs at $K \in \{4, 10, 20, 50\}$ arms, $m
+\in \{10, 40\}$ units per arm ($N$ from 40 to 2{,}000) and $p \in \{5, 20\}$
+independent standard normal covariates, with 20 covariate draws per cell. The
+designs are complete randomization; blocking on the first principal component
+(sort, cut into blocks of $K$, permute within blocks); rerandomization at 1
+percent acceptance on the $K$-arm criterion of Proposition~\ref{prop:rr};
+the sequential procedure of \citet{zhang2023} with allocation function (4.3)
+and $K_0 = 3$, on the whitened covariates with an intercept; one pass of the
+exchange method of anticlustering \citep{papenberg2021} from a random start;
+ARMM \citep{yang2023} through its R package, with units in random order (at
+$K = 4$ only, on 10 draws per cell, and not at $m = 40, p = 20$, where it
+takes about 15 minutes per cell); and randomized ABA with $\sigma = 1$. The
+sequential procedure and randomized ABA are also run on the covariates with
+their squares appended, and ABA with $\sigma = 0$ shows what the jitter does.
+Each design draws 400 assignments per cell. The outcome has a linear part, a
+quadratic part (squares and pairwise products of three covariates) and
+independent standard-normal noise. The linear and quadratic terms are each
+centered and standardized, then their sum is divided by $\sqrt{2}$ before
+adding noise; each scaled signal component has empirical variance one-half.
+For the contrast between arms 1 and 2 we report
+imbalance on the covariates and on their squares, both relative to complete
+randomization; the mean squared error of the difference in means; the 95th
+percentile, over draws of an unmeasured standard normal covariate, of the
+OLS estimator's squared error relative to its value under exact balance;
+and the size and power of the randomization test, at an effect of 1.96
+standard errors of the complete-randomization difference in means.
+Table~\ref{tab:many} reports $m = 40$ at $K = 4$ and $50$, and Figure~\ref{fig:many} all cells.
+
+\input{tab_many_arms.tex}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\textwidth]{fig_many_arms.pdf}
+\caption{Imbalance relative to complete randomization (top, log scale) and
+the 95th percentile of OLS error over an unmeasured covariate (bottom),
+against the number of arms. Each panel is one combination of units per arm
+$m$ and covariates $p$.}
+\label{fig:many}
+\end{figure}
+
+\paragraph{Balance on the covariates.} Randomized ABA balances better than
+the evaluated blocking, rerandomization, ARMM, and sequential designs
+in every cell where they are compared, and its lead grows with $K$.
+At $m = 40$ and $p = 5$ its imbalance is 1.4 percent of complete
+randomization's at $K = 4$ and 0.4 percent at $K = 50$; the sequential
+procedure's is 4.3 and 6.2 percent, ARMM's 6.2 percent at $K = 4$. The
+sequential procedure assigns each unit with probability bounded away from
+zero for every arm, so its imbalance stays at a fixed multiple of the noise
+floor as arms are added; randomized ABA's improves, because more arms mean
+wider shells. Rerandomization fades as Proposition~\ref{prop:rr} predicts,
+from 0.30 at $K = 4$ to 0.78 at $K = 50$ ($p = 5$); blocking on one index
+removes under a fifth of the imbalance. The exchange method, quadratic in
+$N$, balances means better still, by a factor of 1.4 to 7.
+
+\paragraph{Omitted squares.} Balance on the covariates does not carry over
+to their squares. Randomized ABA on the covariates alone leaves the squares
+less balanced than complete randomization does, increasingly so with $K$: 1.44
+times at $K = 50$, $m = 40$, $p = 5$. Putting the squares into the design
+fixes this: at $m = 40$, randomized ABA on covariates and squares cuts
+imbalance on the squares to between 0.9 and 21 percent of complete
+randomization's, against 10 to 34 percent for the sequential procedure on the
+same features, and except at $K = 4, p = 20$ it still balances the
+covariates better than the sequential procedure on the covariates alone.
+
+\paragraph{Estimation and power.} For the outcome with a quadratic part,
+randomized ABA on covariates and squares has the smallest mean squared error
+of the difference in means among designs with a usable test in every cell
+but one, 59 to 69 percent of complete randomization's at $m = 40$, and the
+most power, 0.64 to 0.72 against 0.63 to 0.69 for the sequential procedure on
+the same features and 0.48 to 0.51 for complete randomization. (ABA without
+jitter has lower error at $K = 4$, but its test cannot reject.) The randomization tests held their
+size: the rejection rate under the null averaged 0.048 to 0.052 for every
+randomized design. Over an unmeasured covariate, every randomized design's OLS tail is
+at or slightly below complete randomization's.
+
+\paragraph{The jitter.} With $\sigma = 0$ the partition is fixed and only
+the labels are random. At $K = 4$ that leaves 24 assignments, too few for
+the randomization test to reject at 5 percent, and the tail of OLS error over
+an unmeasured covariate is 2.6 times the exact-balance value against 1.2 for
+the jittered design. Table~\ref{tab:jitter} varies $\sigma$. A little jitter
+($\sigma = 0.1$ to $0.3$) restores the tail while keeping almost all of the
+balance. At $\sigma \ge 1$ the root mean square gap between co-assignment
+probabilities and complete randomization's is within about 0.01 of complete
+randomization's own Monte Carlo floor, though the most co-assigned pair still
+shares an arm 1.2 to 4.5 times as often. At $\sigma = 10$, effectively a
+random order, imbalance is still 1.7 to 7 percent of complete
+randomization's: most of the balance comes from the assignment step, and the
+sort adds a factor of 1.7 to 2.4 at $\sigma = 1$ and 3 to 6 at $\sigma = 0$.
+
+\input{tab_jitter.tex}
+
+\paragraph{Two arms.} With two arms randomized ABA is not the best design.
+At $N = 120$, greedy pair-switching \citep{krieger2019}, which swaps units
+until no swap improves balance, balances means 5 to 14 times better, and on
+covariates with squares it matches or beats randomized ABA in power (0.69
+against 0.63 at $p = 20$). At $p = 20$ and $30$ the sequential procedure
+also balances means better than randomized ABA and, with squares, has more
+power. Splitting units into many small groups by
+randomized ABA and treating half the groups does worse than randomized ABA
+with two groups directly. Randomized ABA's case is many arms (Table~\ref{tab:two}).
+
+\input{tab_two_arms.tex}
+
+\section{Discussion}
+
+Randomized ABA is ABA with two random steps added, and the steps are what make
+it a design: the label shuffle gives exact randomization inference, and the
+jitter gives the partition enough variation for the test to have power and
+for an unmeasured covariate to be balanced as well as under complete
+randomization. ABA's assignment step turns out to be the greedy allocation of
+ARMM, so the many-arm covariate-adaptive designs and the anticlustering
+literature have been computing the same thing by different routes; the
+assignment problem is the cheap one.
+
+The practical recommendation is to run randomized ABA on the covariates and
+their squares whenever all units are known before assignment and the arms
+are more than a handful. When units arrive one at a time, the sequential
+procedure of \citet{zhang2023} is the tool, at some cost in balance. With two
+arms and a few hundred units, local search such as greedy pair-switching
+balances better. The exchange method balances means better than randomized
+ABA at every size we tried but is quadratic in $N$, which matters at the
+scales where ABA was built to run.
+
+The comparison has limits. Covariates are Gaussian and effects constant; one
+outcome model drives the error and power results; $N$ stops at 2{,}000,
+below the scale at which the cost differences bite; and ARMM appears only at
+four arms.
+
+
+\bibliographystyle{plainnat}
+\bibliography{refs}
+
+\end{document}

@@ -1,0 +1,120 @@
+[project]
+name = "randaba"
+description = "Randomized assignment-based anticlustering: covariate-balanced random assignment for experiments with many arms"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Gaurav Sood", email = "contact@gsood.com" }]
+requires-python = ">=3.12"
+version = "0.1.0"
+keywords = ["randomization", "experiments", "anticlustering", "covariate balance", "causal inference"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Scientific/Engineering :: Mathematics",
+]
+dependencies = [
+    "numpy>=2.0",
+    "scipy>=1.13",
+]
+
+[project.urls]
+Homepage = "https://github.com/finite-sample/randaba"
+Documentation = "https://finite-sample.github.io/randaba/"
+Repository = "https://github.com/finite-sample/randaba"
+Issues = "https://github.com/finite-sample/randaba/issues"
+Changelog = "https://github.com/finite-sample/randaba/blob/main/CHANGELOG.md"
+
+[build-system]
+requires = ["uv_build>=0.12.5,<0.14"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "randaba"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.14",
+    "pyright>=1.1.390",
+    "pre-commit>=4",
+    "pydoclint>=0.9.1",
+    "twine>=6",
+    { include-group = "test" },
+]
+test = ["pytest>=8", "pytest-cov>=6"]
+docs = [
+    "sphinx>=8",
+    "py-canon @ git+https://github.com/gojiplus/py-canon@v1",
+    "furo",
+    "myst-parser",
+    "sphinx-copybutton",
+]
+sims = [
+    "jinja2>=3.1",
+    "joblib>=1.4",
+    "matplotlib>=3.9",
+    "pandas>=2.2",
+    "pyarrow>=17",
+]
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.lint]
+external = ["DOC"]
+select = [
+    "E", "W", "F", "I", "B", "C4", "UP", "N", "D", "S", "SIM", "T20", "PT", "RUF",
+    "PTH", "RET", "PIE", "FURB", "PERF", "DTZ", "LOG", "G", "TC", "FLY",
+    "RSE", "SLOT", "FA", "A", "EXE", "ICN", "PGH", "PLE", "ARG", "SLF",
+]
+# D203/D213: the google convention this standard picks. W191/D206/D300:
+# ruff's own docs list these as always incompatible with `ruff format`,
+# which the standard also runs.
+ignore = ["D203", "D213", "W191", "D206", "D300"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+# Unused fixture arguments and private-member access are how tests are written.
+"tests/**" = ["S101", "D", "ARG", "SLF"]
+"docs/**" = ["D"]
+# Scripts report results on stdout.
+"scripts/**" = ["T201"]
+
+[tool.pyright]
+include = ["src"]
+typeCheckingMode = "standard"
+
+[tool.pydoclint]
+style = "google"
+arg-type-hints-in-docstring = false
+check-return-types = false
+check-yield-types = false
+check-class-attributes = false
+allow-init-docstring = true
+exclude = '\.venv|tests|docs'
+
+[tool.pytest.ini_options]
+minversion = "8"
+testpaths = ["tests"]
+log_level = "INFO"
+xfail_strict = true
+filterwarnings = ["error"]
+addopts = ["-ra", "--strict-config", "--strict-markers"]
+
+[tool.coverage.run]
+source = ["src"]
+
+[tool.coverage.report]
+fail_under = 95
+
+[tool.preen]
