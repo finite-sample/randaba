@@ -1,12 +1,9 @@
 # API
 
 ```{eval-rst}
-.. automodule:: balance_buys.designs
+.. automodule:: randaba.designs
    :members:
 
-.. automodule:: balance_buys.grouped
-   :members:
-
-.. automodule:: balance_buys.inference
+.. automodule:: randaba.inference
    :members:
 ```

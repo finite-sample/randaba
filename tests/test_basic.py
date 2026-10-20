@@ -1,7 +1,9 @@
 """Basic package tests."""
 
-import balance_buys
+from importlib.metadata import version
+
+import randaba
 
 
 def test_version() -> None:
-    assert balance_buys.__version__
+    assert randaba.__version__ == version("randaba")

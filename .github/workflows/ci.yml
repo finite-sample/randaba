@@ -22,8 +22,7 @@ jobs:
   ci:
     uses: gojiplus/py-canon/.github/workflows/reusable-ci.yml@v1
     with:
-      wheel-import: balance_buys
-      coverage-floor: 0
+      wheel-import: randaba
+      coverage-floor: 95
       run-preen: true
-      # This private repository has no GitHub Code Security entitlement.
-      run-dependency-review: false
+      run-dependency-review: ${{ !github.event.repository.private }}

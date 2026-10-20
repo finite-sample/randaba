@@ -1,0 +1,19 @@
+\begin{table}[t]
+\centering
+\caption{Cost of one draw. $N$ units, $K$ arms of $m = N/K$, $p$ covariates, $q$ balancing features, $\alpha$ the rerandomization acceptance rate. Memory excludes the covariates themselves.}
+\label{tab:cost}
+\begin{tabular}{lll}
+\toprule
+ & Time & Memory \\
+Design &  &  \\
+\midrule
+Complete randomization & $O(N)$ & $O(N)$ \\
+Blocked on an index & $O(Np^2 + N \log N)$ & $O(N)$ \\
+Rerandomization & $O(Np/\alpha)$ expected & $O(N)$ per candidate \\
+Sequential CAR & $O(NKq)$ & $O(Kq)$, streaming \\
+ARMM & $O(m\,K!\,K^2 p)$ & $O(K!\,K)$ \\
+Exchange, per pass & $O(N^2 p)$ & $O(Kp)$; $O(N^2)$ with distances \\
+Randomized ABA & $O(Np^2 + N\log N + NK(K+p))$ & $O(N + Kp + K^2)$ \\
+\bottomrule
+\end{tabular}
+\end{table}

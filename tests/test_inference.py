@@ -1,37 +1,59 @@
 import numpy as np
+import pytest
 
-from balance_buys import inference
+from randaba import designs, inference
 
 
-def test_ols_coef_matches_lstsq_for_many_splits():
+def test_contrast_matches_group_means_for_many_draws():
     rng = np.random.default_rng(0)
-    x = rng.normal(size=(40, 3))
-    y = rng.normal(size=40)
-    zs = np.array([rng.permutation(np.repeat([0, 1], 20)) for _ in range(5)])
-    fast = inference.ols_coef(y, zs, x)
-    slow = [
-        np.linalg.lstsq(np.column_stack([np.ones(40), z, x]), y, rcond=None)[0][1]
-        for z in zs
-    ]
-    np.testing.assert_allclose(fast, slow, rtol=1e-10)
-
-
-def test_diff_means_vectorized():
-    y = np.arange(4.0)
-    z = np.array([[1, 1, 0, 0], [0, 1, 0, 1]])
-    np.testing.assert_allclose(inference.diff_means(y, z), [-2.0, 1.0])
+    y = rng.normal(size=30)
+    z = np.array([designs.crd(30, 3, rng) for _ in range(5)])
+    got = inference.contrast(y, z, 2, 0)
+    want = [y[d == 2].mean() - y[d == 0].mean() for d in z]
+    np.testing.assert_allclose(got, want)
+    assert np.isclose(inference.contrast(y, z[0], 2, 0), want[0])
 
 
 def test_ri_pvalue_counts_observed_and_ties():
-    assert inference.ri_pvalue(1.0, np.array([0.5, -1.0, 2.0, 0.1])) == 3 / 5
-    assert inference.ri_pvalue(10.0, np.zeros(99)) == 1 / 100
+    assert inference.ri_pvalue(1.0, np.array([0.5, -1.0, 2.0])) == 0.75
+    assert inference.ri_pvalue(3.0, np.array([0.5, -1.0, 2.0])) == 0.25
 
 
-def test_ols_test_matches_statsmodels_formula():
+def test_ri_test_has_size_under_sharp_null():
     rng = np.random.default_rng(1)
-    x = rng.normal(size=(30, 2))
-    z = np.repeat([0, 1], 15)
-    y = x @ [1.0, -1.0] + 0.5 * z + rng.normal(size=30)
-    p = inference.ols_test(y, z, x)
-    assert 0 < p < 1
-    assert inference.t_test(y, z) != p
+    x = rng.normal(size=(40, 3))
+    y = x.sum(axis=1) + rng.normal(size=40)
+    ref = np.array([designs.randomized_aba(x, 4, rng) for _ in range(199)])
+    stats = inference.contrast(y, ref, 0, 1)
+    pvals = [inference.ri_pvalue(s, np.delete(stats, i)) for i, s in enumerate(stats)]
+    # Exchangeable draws: p-values are uniform on {1/199, ..., 1}.
+    assert abs(np.mean(np.array(pvals) <= 0.05) - 0.05) < 0.02
+
+
+@pytest.mark.parametrize(
+    ("y", "z"),
+    [
+        ([1, 2], [0]),
+        ([[1, 2]], [0, 1]),
+        ([1, np.nan], [0, 1]),
+        ([1, 2], [0, 0]),
+        ([1, 2], [[0, 1], [1, 1]]),
+        ([1, 2], 0),
+    ],
+)
+def test_contrast_rejects_invalid_outcomes_or_assignments(y, z):
+    with pytest.raises(ValueError, match=r"outcome|arms"):
+        inference.contrast(y, z, 0, 1)
+
+
+@pytest.mark.parametrize(
+    ("observed", "reference"),
+    [(np.nan, [1]), (np.inf, [1]), ([1], [1]), (1, []), (1, [[1, 2]]), (1, [np.nan])],
+)
+def test_ri_pvalue_rejects_invalid_statistics(observed, reference):
+    with pytest.raises(ValueError, match=r"stat_obs|stat_ref"):
+        inference.ri_pvalue(observed, reference)
+
+
+def test_ri_pvalue_accepts_list_and_counts_near_ties():
+    assert inference.ri_pvalue(1.0, [1 - 1e-12, -1.0, 0.0]) == 0.75

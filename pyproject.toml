@@ -1,15 +1,24 @@
 [project]
-name = "balance_buys"
-description = "What covariate balancing at assignment buys over regression adjustment, and what it costs: designs, closed forms and randomization inference"
+name = "randaba"
+description = "Randomized assignment-based anticlustering: covariate-balanced random assignment for experiments with many arms"
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "Gaurav Sood", email = "contact@gsood.com" }]
 requires-python = ">=3.12"
 version = "0.1.0"
+keywords = ["randomization", "experiments", "anticlustering", "covariate balance", "causal inference"]
 classifiers = [
+    "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Scientific/Engineering :: Mathematics",
 ]
 dependencies = [
     "numpy>=2.0",
@@ -20,22 +29,23 @@ dependencies = [
 Homepage = "https://github.com/finite-sample/randaba"
 Documentation = "https://github.com/finite-sample/randaba/tree/main/docs"
 Repository = "https://github.com/finite-sample/randaba"
+Issues = "https://github.com/finite-sample/randaba/issues"
+Changelog = "https://github.com/finite-sample/randaba/blob/main/CHANGELOG.md"
 
 [build-system]
 requires = ["uv_build>=0.12.5,<0.14"]
 build-backend = "uv_build"
 
 [tool.uv.build-backend]
-module-name = "balance_buys"
-
-[tool.uv.sources]
-finite-selection = { git = "https://github.com/finite-sample/finite-selection" }
+module-name = "randaba"
 
 [dependency-groups]
 dev = [
     "ruff>=0.14",
     "pyright>=1.1.390",
     "pre-commit>=4",
+    "pydoclint>=0.9.1",
+    "twine>=6",
     { include-group = "test" },
 ]
 test = ["pytest>=8", "pytest-cov>=6"]
@@ -47,10 +57,9 @@ docs = [
     "sphinx-copybutton",
 ]
 sims = [
-    "finite-selection",
+    "jinja2>=3.1",
     "joblib>=1.4",
     "matplotlib>=3.9",
-    "networkx>=3.7",
     "pandas>=2.2",
     "pyarrow>=17",
 ]
@@ -105,8 +114,7 @@ addopts = ["-ra", "--strict-config", "--strict-markers"]
 [tool.coverage.run]
 source = ["src"]
 
-[tool.preen]
+[tool.coverage.report]
+fail_under = 95
 
-[tool.codespell]
-# som: selection order matrix, the FSM package's function name.
-ignore-words-list = "som"
+[tool.preen]
