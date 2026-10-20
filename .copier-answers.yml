@@ -8,5 +8,5 @@ default_branch: main
 description: 'Randomized balanced assignment by jittered shell anticlustering, with exact randomization inference'
 needs_cli: false
 org: finite-sample
-package_name: balance_buys
-project_name: balance_buys
+package_name: randaba
+project_name: randaba

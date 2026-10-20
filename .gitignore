@@ -7,6 +7,11 @@ build/
 .pytest_cache/
 .ruff_cache/
 .coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.env
+.env.*
 docs/_build/
 _site/
 .DS_Store
