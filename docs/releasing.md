@@ -2,20 +2,19 @@
 
 The first public version is prepared as `0.1.0`. The package is not yet
 published on PyPI. Both the distribution and Python import are `randaba`.
+The repository and [documentation site](https://finite-sample.github.io/randaba/)
+are public. The [release audit](release-audit.md) records the completed checks.
 
 ## First public release
 
-1. Merge the release-preparation branch after CI passes. It brings the
-   unpublished `randaba` implementation onto the existing repository history.
+1. The release-preparation branch is merged and the public launch is complete.
+   Confirm the release commit has passing CI before tagging.
 2. Run `make ci-docker` and `make ci-docker PYTHON_VERSION=3.14` on the release
    commit. The checks build a source distribution, build its wheel, validate
    metadata, and run tests against the installed wheel in an isolated environment.
-3. Change repository visibility to public in GitHub Settings. Configure
-   Pages to use GitHub Actions, then dispatch the Docs workflow on `main`.
-   The workflow builds while private and deploys only from public `main`.
-   Once Pages is live, the documentation URL can point to
-   `https://finite-sample.github.io/randaba/`.
-4. Create the GitHub Actions environment `pypi`. In PyPI, add a pending
+3. Pages is configured to use GitHub Actions. Confirm the Docs workflow
+   deploys successfully from `main`.
+4. The GitHub Actions environment `pypi` exists. In PyPI, add a pending
    trusted publisher with these exact values:
 
    | Field | Value |

@@ -27,7 +27,7 @@ dependencies = [
 
 [project.urls]
 Homepage = "https://github.com/finite-sample/randaba"
-Documentation = "https://github.com/finite-sample/randaba/tree/main/docs"
+Documentation = "https://finite-sample.github.io/randaba/"
 Repository = "https://github.com/finite-sample/randaba"
 Issues = "https://github.com/finite-sample/randaba/issues"
 Changelog = "https://github.com/finite-sample/randaba/blob/main/CHANGELOG.md"

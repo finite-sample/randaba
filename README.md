@@ -1,7 +1,7 @@
 # randaba
 
 [![CI](https://github.com/finite-sample/randaba/actions/workflows/ci.yml/badge.svg)](https://github.com/finite-sample/randaba/actions/workflows/ci.yml)
-[![Docs](https://github.com/finite-sample/randaba/actions/workflows/docs.yml/badge.svg)](https://github.com/finite-sample/randaba/tree/main/docs)
+[![Docs](https://github.com/finite-sample/randaba/actions/workflows/docs.yml/badge.svg)](https://finite-sample.github.io/randaba/)
 
 Randomized assignment-based anticlustering: random assignment to many arms
 that keeps the arms alike on baseline covariates. Assignment-based
