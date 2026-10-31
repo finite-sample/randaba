@@ -1,4 +1,4 @@
-# randaba
+# randaba: balance treatment groups without giving up randomization
 
 [![CI](https://github.com/finite-sample/randaba/actions/workflows/ci.yml/badge.svg)](https://github.com/finite-sample/randaba/actions/workflows/ci.yml)
 [![Docs](https://github.com/finite-sample/randaba/actions/workflows/docs.yml/badge.svg)](https://finite-sample.github.io/randaba/)
