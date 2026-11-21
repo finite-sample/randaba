@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import numpy as np
 from scipy.optimize import linear_sum_assignment
-from scipy.stats import chi2, norm
+from scipy.special import ndtr
+from scipy.stats import chi2
 
 
 def _covariates(x: np.ndarray) -> np.ndarray:
@@ -161,7 +162,7 @@ def sequential_car(
     z = np.empty(len(x), dtype=int)
     for i in rng.permutation(len(x)):
         d = 2.0 * lam @ phi[i]
-        prob = norm.sf(np.clip(d, -k0, k0))
+        prob = ndtr(-np.clip(d, -k0, k0))
         t = rng.choice(k, p=prob / prob.sum())
         lam -= phi[i] / k
         lam[t] += phi[i]
