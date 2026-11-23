@@ -5,7 +5,7 @@ readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "Gaurav Sood" }]
-requires-python = ">=3.12"
+requires-python = ">=3.13"
 version = "0.1.0"
 keywords = ["randomization", "experiments", "anticlustering", "covariate balance", "causal inference"]
 classifiers = [
@@ -15,7 +15,6 @@ classifiers = [
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
     "Topic :: Scientific/Engineering :: Mathematics",
@@ -66,7 +65,7 @@ sims = [
 
 [tool.ruff]
 line-length = 88
-target-version = "py312"
+target-version = "py313"
 
 [tool.ruff.lint]
 external = ["DOC"]
